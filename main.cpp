@@ -50,17 +50,20 @@ void write_data(uint8_t data) {
 // Set drawing window with offsets to fix edge noise
 void set_window(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1) {
     // Standard offsets for 1.8" ST7735
+    uint8_t x_offset = 2;
+    uint8_t y_offset = 1;
+
     write_command(0x2A); // Column Address Set (CASET)
     write_data(0x00);
-    write_data(x0);
+    write_data(x0 + x_offset);
     write_data(0x00);
-    write_data(x1);
+    write_data(x1 + x_offset);
 
     write_command(0x2B); // Row Address Set (RASET)
     write_data(0x00);
-    write_data(y0);
+    write_data(y0 + y_offset);
     write_data(0x00);
-    write_data(y1);
+    write_data(y1 + y_offset);
 
     write_command(0x2C); // Memory Write (RAMWR)
 }
