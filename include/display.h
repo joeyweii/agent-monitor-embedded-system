@@ -40,4 +40,8 @@ void display_flush_async();
 bool display_is_busy();
 void display_wait_ready();
 
+// Text Rendering API
+void display_draw_char(int x, int y, char c, uint16_t color, uint16_t bg, uint8_t size);
+void display_draw_string(int x, int y, const char* str, uint16_t color, uint16_t bg, uint8_t size);
+
 #endif // DISPLAY_H

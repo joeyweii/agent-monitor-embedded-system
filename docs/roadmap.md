@@ -22,10 +22,10 @@ This roadmap outlines the development phases for the Agent Monitor system.
 - [x] Benchmark refresh rates (Verified >60 FPS theoretical SPI throughput).
 
 ## Phase 4: Information Layer
-- [ ] Integrate 5x7 or 8x8 bitmap font table.
-- [ ] Implement `draw_char()` and `draw_string()`.
-- [ ] Add support for text alignment and color highlighting.
-- [ ] Verify text clipping to prevent memory corruption.
+- [x] Integrate 5x7 or 8x8 bitmap font table.
+- [x] Implement `draw_char()` and `draw_string()`.
+- [x] Add support for text alignment and color highlighting.
+- [x] Verify text clipping to prevent memory corruption.
 
 ## Phase 5: Communication Layer
 - [ ] Implement Ring Buffer for Serial RX.

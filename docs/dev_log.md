@@ -1,40 +1,47 @@
 # Agent Monitor - Engineering Dev Log
 
-## 2026-06-10 | Phase 01: Hardware Verification
+## 2026-06-10 | Phase 01: Hardware Verification Complete
 **Spec Reference**: [Phase 01: Hardware Verification](phase_docs/phase_01_hardware_verification.md)
 
 ### Accomplishments
-- **Successful ST7735 LCD Integration**: Established SPI communication protocol supporting RGB565 16-bit color rendering on a 1.8" TFT display.
-- **3-Button Navigation System**: Fully integrated PREV (GP26), NEXT (GP27), and SELECT (GP28) physical inputs with a circular navigation state machine.
-- **Stability & Monitoring**: Implemented a Heartbeat LED (GP25) and USB Serial debugging output to ensure persistent firmware operation and real-time state monitoring.
+- **LCD Integration**: Verified SPI communication with ST7735. Solved Red-Blue swap by updating `MADCTL` to RGB mode.
+- **Edge Artifacts**: Resolved random noise on screen edges by applying `X=+2, Y=+1` offsets in `set_window`.
+- **Button Matrix**: Fixed 90-degree orientation error for tactile switches. Implemented 3-button (PREV, NEXT, SELECT) navigation logic.
 
 ---
 
-## 2026-06-12 | Phase 02: Graphics Foundation
+## 2026-06-12 | Phase 02: Graphics Foundation Complete
 **Spec Reference**: [Phase 02: Graphics Foundation](phase_docs/phase_02_graphics_foundation.md)
 
 ### Accomplishments
+- **Modular Refactoring**: Migrated from monolithic `main.cpp` to a structured `src/` and `include/` architecture.
 - **Framebuffer Integration**: Implemented a 40KB SRAM-based framebuffer (RGB565).
 - **Endianness Correction**: Solved the Little-Endian (RP2040) to Big-Endian (ST7735) color mapping issue via a row-by-row swap buffer.
-- **Coordinate Accuracy**: Verified that software primitives (`draw_pixel`, `draw_rect`) align perfectly with physical display edges using the Phase 1 offsets.
 
 ---
 
-## 2026-06-12 | Phase 03: Performance Optimization
+## 2026-06-12 | Phase 03: Performance Optimization Complete
 **Spec Reference**: [Phase 03: Performance Optimization](phase_docs/phase_03_performance_optimization.md)
 
 ### Accomplishments
-- **Pure 16-bit Data Path**: Optimized both SPI and DMA to operate in synchronized 16-bit mode. This reduced bus cycles and removed the need for software byte-swapping.
-- **Double Buffering**: Implemented a Ping-Pong buffer system (80KB total) to enable flicker-free animations and zero-tearing UI.
-- **Asynchronous DMA**: Decoupled the CPU from the display transmission. The CPU now triggers a transfer and immediately returns to process events.
-- **Event-Driven UI Logic**: Refactored the main loop to use non-blocking timer-based debouncing and a "Dirty Flag" pattern to minimize redundant SPI transfers.
-
-### Technical Notes
-- **Throughput**: SPI clocked at 24MHz. 40KB transfer takes ~13.6ms, supporting a theoretical maximum refresh rate of ~73 FPS.
+- **Pure 16-bit Data Path**: Optimized both SPI and DMA to operate in synchronized 16-bit mode.
+- **Double Buffering**: Implemented a Ping-Pong buffer system (80KB total) for flicker-free animations.
+- **Asynchronous DMA**: Decoupled CPU and display, utilizing DMA for high-speed transfers.
+- **Event-Driven UI**: Implemented non-blocking input and "Dirty Flag" rendering.
 
 ---
 
-## [Next Entry] | Phase 04: Information Layer
-**Spec Reference**: [Phase 04: Information Layer (Upcoming)](#)
+## 2026-06-1w | Phase 04: Information Layer Complete
+**Spec Reference**: [Phase 04: Information Layer](phase_docs/phase_04_information_layer.md)
 
-*Ready to implement text rendering...*
+### Accomplishments
+- **Bitmap Font Engine**: Integrated 5x7 font table and implemented `draw_char`/`draw_string` primitives.
+- **Dynamic Scaling**: Added size multiplier support for UI elements.
+- **Bounds Management**: Implemented pixel-level clipping for safe text rendering.
+
+---
+
+## [Next Entry] | Phase 05: Communication Layer
+**Spec Reference**: [Phase 05: Communication Layer (Upcoming)](#)
+
+*Starting soon...*
