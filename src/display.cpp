@@ -15,17 +15,21 @@ static dma_channel_config dma_config;
 
 // Internal functions for ST7735 communication
 static void write_command(uint8_t cmd) {
+    spi_set_format(SPI_PORT, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
     gpio_put(PIN_DC, 0);
     gpio_put(PIN_CS, 0);
     spi_write_blocking(SPI_PORT, &cmd, 1);
     gpio_put(PIN_CS, 1);
+    spi_set_format(SPI_PORT, 16, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
 }
 
 static void write_data(uint8_t data) {
+    spi_set_format(SPI_PORT, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
     gpio_put(PIN_DC, 1);
     gpio_put(PIN_CS, 0);
     spi_write_blocking(SPI_PORT, &data, 1);
     gpio_put(PIN_CS, 1);
+    spi_set_format(SPI_PORT, 16, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
 }
 
 static void set_window(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1) {
@@ -48,14 +52,13 @@ static void set_window(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1) {
     write_command(0x2C); // RAMWR
 }
 
-// Convert Little-Endian color to Big-Endian for ST7735
-static inline uint16_t swap_endian(uint16_t color) {
-    return (color << 8) | (color >> 8);
-}
-
 void display_init() {
     // Initialize SPI at high speed (24MHz target)
     spi_init(SPI_PORT, 24 * 1000 * 1000);
+    
+    // Default to 16-bit format for DMA efficiency
+    spi_set_format(SPI_PORT, 16, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
+
     gpio_set_function(PIN_SCK, GPIO_FUNC_SPI);
     gpio_set_function(PIN_MOSI, GPIO_FUNC_SPI);
 
@@ -82,6 +85,7 @@ void display_init() {
     gpio_put(PIN_RESET, 1);
     sleep_ms(120);
 
+    // ST7735 Initialization Sequence
     write_command(0x01); // Software Reset
     sleep_ms(120);
     write_command(0x11); // Sleep Out
@@ -104,24 +108,23 @@ void display_init() {
 }
 
 void display_clear(uint16_t color) {
-    uint16_t swapped = swap_endian(color);
+    // In 16-bit SPI mode, we store colors as-is (no manual swap needed)
     for (int i = 0; i < LCD_WIDTH * LCD_HEIGHT; i++) {
-        back_buffer[i] = swapped;
+        back_buffer[i] = color;
     }
 }
 
 void display_draw_pixel(int x, int y, uint16_t color) {
     if (x < 0 || x >= LCD_WIDTH || y < 0 || y >= LCD_HEIGHT) return;
-    back_buffer[y * LCD_WIDTH + x] = swap_endian(color);
+    back_buffer[y * LCD_WIDTH + x] = color;
 }
 
 void display_draw_rect(int x, int y, int w, int h, uint16_t color) {
-    uint16_t swapped = swap_endian(color);
     for (int j = y; j < y + h; j++) {
         if (j < 0 || j >= LCD_HEIGHT) continue;
         for (int i = x; i < x + w; i++) {
             if (i < 0 || i >= LCD_WIDTH) continue;
-            back_buffer[j * LCD_WIDTH + i] = swapped;
+            back_buffer[j * LCD_WIDTH + i] = color;
         }
     }
 }
@@ -153,13 +156,9 @@ void display_flush_async() {
     dma_channel_configure(
         dma_chan,
         &dma_config,
-        &spi_get_hw(SPI_PORT)->dr, // Write to SPI TX FIFO
-        front_buffer,              // Read from front buffer
-        LCD_WIDTH * LCD_HEIGHT,    // Number of 16-bit transfers
-        true                       // Start immediately
+        &spi_get_hw(SPI_PORT)->dr,        // Write to SPI TX FIFO
+        front_buffer,                     // Read from front buffer
+        LCD_WIDTH * LCD_HEIGHT,           // Number of 16-bit transfers
+        true                              // Start immediately
     );
-
-    // Note: CS pin will be set high by display_wait_ready() 
-    // or by the next flush call when dma is done.
-    // However, for SPI we usually keep CS low during the whole transfer.
 }
