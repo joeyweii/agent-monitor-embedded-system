@@ -34,6 +34,10 @@ void display_init();
 void display_clear(uint16_t color);
 void display_draw_pixel(int x, int y, uint16_t color);
 void display_draw_rect(int x, int y, int w, int h, uint16_t color);
-void display_flush();
+
+// DMA & Double Buffering API
+void display_flush_async();
+bool display_is_busy();
+void display_wait_ready();
 
 #endif // DISPLAY_H

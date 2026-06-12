@@ -33,6 +33,7 @@ target_link_libraries(agent_monitor PRIVATE
     pico_stdlib
     hardware_spi
     hardware_gpio
+    hardware_dma
 )
 
 # Enable USB serial output (stdio over USB), disable UART output

@@ -10,56 +10,49 @@ int main() {
     display_init();
     buttons_init();
 
-    // Visual Test Pattern: Draw a border and a center square
-    display_clear(COLOR_BLACK);
-    
-    // Border
-    display_draw_rect(0, 0, LCD_WIDTH, 2, COLOR_RED);             // Top
-    display_draw_rect(0, LCD_HEIGHT - 2, LCD_WIDTH, 2, COLOR_RED); // Bottom
-    display_draw_rect(0, 0, 2, LCD_HEIGHT, COLOR_RED);             // Left
-    display_draw_rect(LCD_WIDTH - 2, 0, 2, LCD_HEIGHT, COLOR_RED); // Right
-
-    // Center Square
-    display_draw_rect(LCD_WIDTH/2 - 10, LCD_HEIGHT/2 - 10, 20, 20, COLOR_GREEN);
-
-    display_flush();
-
     static uint8_t color_idx = 0;
     uint16_t colors[] = {COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_YELLOW};
 
     while (true) {
         led_toggle();
 
-        bool changed = false;
+        // 1. Wait for previous DMA transfer to complete before drawing new frame
+        display_wait_ready();
 
+        // 2. Process Input
+        bool changed = false;
         if (button_is_pressed(BTN_PREV)) {
             color_idx = (color_idx + 3) % 4;
             changed = true;
+            sleep_ms(200); // Simple debounce
         } else if (button_is_pressed(BTN_NEXT)) {
             color_idx = (color_idx + 1) % 4;
             changed = true;
+            sleep_ms(200); // Simple debounce
         } else if (button_is_pressed(BTN_SELECT)) {
             display_clear(COLOR_WHITE);
-            display_flush();
-            sleep_ms(250);
-            // Redraw pattern after white flash
-            display_clear(COLOR_BLACK);
-            display_draw_rect(0, 0, LCD_WIDTH, 2, COLOR_RED);
-            display_draw_rect(0, LCD_HEIGHT - 2, LCD_WIDTH, 2, COLOR_RED);
-            display_draw_rect(0, 0, 2, LCD_HEIGHT, COLOR_RED);
-            display_draw_rect(LCD_WIDTH - 2, 0, 2, LCD_HEIGHT, COLOR_RED);
-            display_draw_rect(LCD_WIDTH/2 - 10, LCD_HEIGHT/2 - 10, 20, 20, colors[color_idx]);
-            display_flush();
+            display_flush_async();
+            sleep_ms(200);
+            continue;
         }
 
-        if (changed) {
-            // Update the center square color based on selection
-            display_draw_rect(LCD_WIDTH/2 - 10, LCD_HEIGHT/2 - 10, 20, 20, colors[color_idx]);
-            display_flush();
-            sleep_ms(250);
-        }
+        // 3. Draw to BACK BUFFER
+        display_clear(COLOR_BLACK);
+        
+        // Draw standard border
+        display_draw_rect(0, 0, LCD_WIDTH, 2, COLOR_RED);
+        display_draw_rect(0, LCD_HEIGHT - 2, LCD_WIDTH, 2, COLOR_RED);
+        display_draw_rect(0, 0, 2, LCD_HEIGHT, COLOR_RED);
+        display_draw_rect(LCD_WIDTH - 2, 0, 2, LCD_HEIGHT, COLOR_RED);
 
-        sleep_ms(50);
+        // Draw animated/selectable center square
+        display_draw_rect(LCD_WIDTH/2 - 15, LCD_HEIGHT/2 - 15, 30, 30, colors[color_idx]);
+
+        // 4. Trigger Asynchronous Flush (DMA takes over here)
+        display_flush_async();
+
+        // The CPU is now free! We can do other things while the DMA sends the data.
+        sleep_ms(10);
     }
 
     return 0;

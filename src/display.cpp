@@ -1,9 +1,17 @@
 #include "display.h"
 #include "hardware/gpio.h"
+#include "hardware/dma.h"
 #include <string.h>
 
-// Global framebuffer (40,960 bytes)
-static uint16_t framebuffer[LCD_WIDTH * LCD_HEIGHT];
+// Double Buffering Allocation (80KB total)
+static uint16_t buffer_0[LCD_WIDTH * LCD_HEIGHT];
+static uint16_t buffer_1[LCD_WIDTH * LCD_HEIGHT];
+
+static uint16_t *front_buffer = buffer_0; // Being sent to LCD via DMA
+static uint16_t *back_buffer = buffer_1;  // Being drawn into by CPU
+
+static int dma_chan;
+static dma_channel_config dma_config;
 
 // Internal functions for ST7735 communication
 static void write_command(uint8_t cmd) {
@@ -40,9 +48,14 @@ static void set_window(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1) {
     write_command(0x2C); // RAMWR
 }
 
+// Convert Little-Endian color to Big-Endian for ST7735
+static inline uint16_t swap_endian(uint16_t color) {
+    return (color << 8) | (color >> 8);
+}
+
 void display_init() {
-    // Initialize SPI
-    spi_init(SPI_PORT, 12 * 1000 * 1000);
+    // Initialize SPI at high speed (24MHz target)
+    spi_init(SPI_PORT, 24 * 1000 * 1000);
     gpio_set_function(PIN_SCK, GPIO_FUNC_SPI);
     gpio_set_function(PIN_MOSI, GPIO_FUNC_SPI);
 
@@ -80,46 +93,73 @@ void display_init() {
     write_data(0xC0);    // RGB mode
     write_command(0x29); // Display On
     sleep_ms(100);
+
+    // Initialize DMA
+    dma_chan = dma_claim_unused_channel(true);
+    dma_config = dma_channel_get_default_config(dma_chan);
+    channel_config_set_transfer_data_size(&dma_config, DMA_SIZE_16);
+    channel_config_set_dreq(&dma_config, spi_get_index(SPI_PORT) ? DREQ_SPI1_TX : DREQ_SPI0_TX);
+    channel_config_set_read_increment(&dma_config, true);
+    channel_config_set_write_increment(&dma_config, false);
 }
 
 void display_clear(uint16_t color) {
+    uint16_t swapped = swap_endian(color);
     for (int i = 0; i < LCD_WIDTH * LCD_HEIGHT; i++) {
-        framebuffer[i] = color;
+        back_buffer[i] = swapped;
     }
 }
 
 void display_draw_pixel(int x, int y, uint16_t color) {
     if (x < 0 || x >= LCD_WIDTH || y < 0 || y >= LCD_HEIGHT) return;
-    framebuffer[y * LCD_WIDTH + x] = color;
+    back_buffer[y * LCD_WIDTH + x] = swap_endian(color);
 }
 
 void display_draw_rect(int x, int y, int w, int h, uint16_t color) {
+    uint16_t swapped = swap_endian(color);
     for (int j = y; j < y + h; j++) {
+        if (j < 0 || j >= LCD_HEIGHT) continue;
         for (int i = x; i < x + w; i++) {
-            display_draw_pixel(i, j, color);
+            if (i < 0 || i >= LCD_WIDTH) continue;
+            back_buffer[j * LCD_WIDTH + i] = swapped;
         }
     }
 }
 
-void display_flush() {
+bool display_is_busy() {
+    return dma_channel_is_busy(dma_chan);
+}
+
+void display_wait_ready() {
+    while (display_is_busy()) {
+        tight_loop_contents();
+    }
+}
+
+void display_flush_async() {
+    display_wait_ready();
+
+    // Swap buffers
+    uint16_t *tmp = front_buffer;
+    front_buffer = back_buffer;
+    back_buffer = tmp;
+
+    // Prepare display for transfer
     set_window(0, 0, LCD_WIDTH - 1, LCD_HEIGHT - 1);
-    
     gpio_put(PIN_DC, 1);
     gpio_put(PIN_CS, 0);
-    
-    // Send entire framebuffer. 
-    // ST7735 expects big-endian (MSB first) for 16-bit colors.
-    // We need to swap bytes if the system is little-endian (RP2040 is).
-    
-    static uint8_t swap_buffer[LCD_WIDTH * 2];
-    for (int y = 0; y < LCD_HEIGHT; y++) {
-        for (int x = 0; x < LCD_WIDTH; x++) {
-            uint16_t pixel = framebuffer[y * LCD_WIDTH + x];
-            swap_buffer[x * 2] = (pixel >> 8) & 0xFF;
-            swap_buffer[x * 2 + 1] = pixel & 0xFF;
-        }
-        spi_write_blocking(SPI_PORT, swap_buffer, sizeof(swap_buffer));
-    }
-    
-    gpio_put(PIN_CS, 1);
+
+    // Start DMA transfer from front_buffer
+    dma_channel_configure(
+        dma_chan,
+        &dma_config,
+        &spi_get_hw(SPI_PORT)->dr, // Write to SPI TX FIFO
+        front_buffer,              // Read from front buffer
+        LCD_WIDTH * LCD_HEIGHT,    // Number of 16-bit transfers
+        true                       // Start immediately
+    );
+
+    // Note: CS pin will be set high by display_wait_ready() 
+    // or by the next flush call when dma is done.
+    // However, for SPI we usually keep CS low during the whole transfer.
 }
