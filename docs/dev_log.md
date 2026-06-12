@@ -5,7 +5,5 @@
 
 ---
 
-## [Next Entry] | Phase 2: Graphics Foundation
+## 2026-06-12 | Phase 2: Graphics Foundation
 **Spec Reference**: [Phase 02: Graphics Foundation](phase_docs/phase_02_graphics_foundation.md)
-
-*Starting soon...*

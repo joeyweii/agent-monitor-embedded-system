@@ -10,10 +10,10 @@ This roadmap outlines the development phases for the Agent Monitor system.
 - [x] Implement Serial debugging over USB.
 
 ## Phase 2: Graphics Foundation
-- [ ] Allocate 40KB SRAM Framebuffer (RGB565).
-- [ ] Implement software drawing primitives (pixel, rect, clear).
-- [ ] Develop `display_flush()` for full-buffer SPI transmission.
-- [ ] Verify coordinate mapping accuracy.
+- [x] Allocate 40KB SRAM Framebuffer (RGB565).
+- [x] Implement software drawing primitives (pixel, rect, clear).
+- [x] Develop `display_flush()` for full-buffer SPI transmission.
+- [x] Verify coordinate mapping accuracy.
 
 ## Phase 3: Performance Optimization
 - [ ] Allocate second 40KB buffer for Ping-Pong strategy.
