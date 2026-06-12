@@ -67,7 +67,16 @@ For detailes, refer to the **[Breadboard Layout & Wiring Guide](breadboard_layou
 *   **Display**: 1.8" ST7735 TFT LCD.
 *   **Input**: 3x Tactile Buttons (Active-Low).
 ...
-## 5. Goals
+## 5. Development Roadmap
+The project is divided into six logical phases:
+1.  **Phase 1: Hardware Verification**: Core LCD and button integration (Complete).
+2.  **Phase 2: Graphics Foundation**: Memory-backed rendering via Framebuffer.
+3.  **Phase 3: Performance Optimization**: Asynchronous DMA and Double Buffering.
+4.  **Phase 4: Information Layer**: Bitmap font engine and text rendering.
+5.  **Phase 5: Communication Layer**: Robust serial protocol for host communication.
+6.  **Phase 6: Application Logic**: UI state machine and smartwatch UX.
+
+## 6. Project Goals
 *   **Performance**: Stable 30+ FPS UI.
 *   **Visibility**: Real-time status for up to 4 concurrent agents.
 *   **Reliability**: Robust handling of serial noise and common-ground stability.
