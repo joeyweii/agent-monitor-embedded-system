@@ -1,4 +1,4 @@
-# Phase Spec: 01 - Hardware Verification
+# Phase 01 - Hardware Verification
 
 ## Objective
 To ensure proper functionality of the hardware interfaces and underlying drivers.

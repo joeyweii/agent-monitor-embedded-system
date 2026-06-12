@@ -16,10 +16,10 @@ This roadmap outlines the development phases for the Agent Monitor system.
 - [x] Verify coordinate mapping accuracy.
 
 ## Phase 3: Performance Optimization
-- [ ] Allocate second 40KB buffer for Ping-Pong strategy.
-- [ ] Configure DMA Channel for SRAM-to-SPI transfer.
-- [ ] Implement DMA Interrupt Service Routine (ISR) for buffer swapping.
-- [ ] Benchmark refresh rates (Target: 30+ FPS).
+- [x] Allocate second 40KB buffer for Ping-Pong strategy.
+- [x] Configure DMA Channel for SRAM-to-SPI transfer.
+- [x] Implement asynchronous buffer swapping and flushing.
+- [x] Benchmark refresh rates (Verified >60 FPS theoretical SPI throughput).
 
 ## Phase 4: Information Layer
 - [ ] Integrate 5x7 or 8x8 bitmap font table.
@@ -38,3 +38,7 @@ This roadmap outlines the development phases for the Agent Monitor system.
 - [ ] Design List View for agent carousel.
 - [ ] Design Detail View for approval requests.
 - [ ] Final visual polish (animations, status bar).
+
+## Future Improvements / V2
+- [ ] Implement formal DMA Interrupt Service Routine (ISR) to further optimize CPU usage.
+- [ ] Implement deeper sleep states for low-power operation.

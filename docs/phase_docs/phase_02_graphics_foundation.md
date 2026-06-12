@@ -1,4 +1,4 @@
-# Phase Spec: 02 - Graphics Foundation (Complete)
+# Phase 02 - Graphics Foundation (Complete)
 
 ## Objective
 Transition from immediate SPI rendering to a memory-backed graphics architecture. This allows for complex UI composition (layering, text, shapes) without flickering.

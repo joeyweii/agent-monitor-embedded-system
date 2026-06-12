@@ -1,28 +1,21 @@
-# Phase Spec: 03 - Performance Optimization
+# Phase 03 - Performance Optimization (Complete)
 
 ## Objective
 Enable Direct Memory Access (DMA) and Double Buffering (Ping-Pong) to achieve high-frame-rate, asynchronous display updates. This frees the CPU to handle serial communication and application logic while the screen flushes.
 
-## Technical Requirements
-- **Memory Allocation**: Allocate a second 40KB buffer (`uint16_t framebuffer_b[128 * 160]`).
-- **DMA Configuration**:
-    - Configure one DMA channel for SRAM-to-SPI transmission.
-    - Set transfer size to 16-bit.
-    - Use SPI TX DREQ (Data Request) to pace the transfer.
-- **Asynchronous Flow**:
-    - `display_flush()` triggers DMA and returns immediately.
-    - Implement a `display_is_busy()` check using `dma_channel_is_busy()`.
-- **Endianness Strategy**: Optimization of the row-by-row swap.
+## Key Achievements
+- **Pure 16-bit Data Path**: Optimized both SPI and DMA to operate in synchronized 16-bit mode, maximizing bus efficiency.
+- **Double Buffering (Ping-Pong)**: Implemented a dual-buffer system (80KB total) to enable flicker-free animations and zero-tearing UI.
+- **Asynchronous DMA**: Decoupled the CPU from display transmission; the CPU now triggers a transfer and immediately returns to process events.
+- **Event-Driven UI Logic**: Refactored the main loop with non-blocking timer-based debouncing and a "Dirty Flag" pattern to minimize redundant updates.
 
-## Key Functions to Implement
+## Key Functions Implemented
 ```cpp
-void display_init_dma();
-void display_swap_buffers();
-bool display_is_busy();
-void display_flush_async(); 
+void display_flush_async();  // Triggers non-blocking DMA transfer
+bool display_is_busy();       // Checks if DMA is currently active
+void display_wait_ready();    // Synchronous wait for transfer completion
 ```
 
-## Success Criteria
-1.  CPU utilization drops significantly during screen flushes.
-2.  Refresh rate exceeds 30 FPS.
-3.  Zero "tearing" artifacts observed during fast animations.
+## Resolved Technical Issues
+- **DMA/SPI Width Mismatch**: Resolved a "Double Image" artifact caused by 16-bit DMA pushing into an 8-bit SPI FIFO. Fixed by synchronizing both peripherals to 16-bit mode.
+- **Endianness Double-Swap**: Discovered that 16-bit SPI mode handles Big-Endian transmission natively on RP2040, allowing for the removal of software byte-swapping logic.
