@@ -1,10 +1,23 @@
-# Breadboard Layout
+# Breadboard Layout & Wiring
 
-Breadboard orientation: Horizontal, USB port on the left, Row A at the bottom, Row J at the top.
+This document provides the physical and electrical specifications for the Agent Monitor hardware.
 
 ---
 
-## 1. Complete Pinout Table
+## 1. Bill of Materials
+
+| Item | Quantity | Description |
+| :--- | :--- | :--- |
+| **Raspberry Pi Pico** | 1 | RP2040 Microcontroller (Pico or Pico 2) |
+| **ST7735 1.8" LCD** | 1 | 128x160 TFT Display (SPI Interface) |
+| **Tactile Buttons** | 3 | B3F-1020 4-pin switches |
+| **Breadboard** | 1 | 400-point |
+| **Jumper Wires** | ~15 | Male-to-Male |
+| **USB Cable** | 1 | Micro-USB |
+
+---
+
+## 2. Complete Pinout Table
 
 ### Pico Positioning
 | Direction | Header | Row Range |
