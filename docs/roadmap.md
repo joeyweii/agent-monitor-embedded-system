@@ -34,11 +34,16 @@ This roadmap outlines the development phases for the Agent Monitor system.
 - [x] Add Device-to-Host confirmation for button actions.
 
 ## Phase 6: Application Logic
-- [ ] Implement Finite State Machine (FSM) for navigation.
-- [ ] Design List View for agent carousel.
-- [ ] Design Detail View for approval requests.
-- [ ] Final visual polish (animations, status bar).
+- [x] Implement Finite State Machine (FSM) for navigation.
+- [x] Design List View for agent carousel.
+- [x] Design Detail View for expanded agent status.
+- [x] Implement interactive Action confirmation logic.
 
-## Future Improvements / V2
-- [ ] Implement formal DMA Interrupt Service Routine (ISR) to further optimize CPU usage.
-- [ ] Implement deeper sleep states for low-power operation.
+## Future Improvements
+- [ ] **High-Performance Interrupts**:
+    - Implement formal DMA Interrupt Service Routine (ISR) to decouple buffer swapping from the main loop.
+    - Implement UART RX Interrupts with a large hardware-level Ring Buffer to prevent data loss during heavy rendering.
+- [ ] **Partial Rendering**: Implement "Dirty Rectangle" logic to only flush modified screen regions, significantly increasing FPS and reducing SPI traffic.
+- [ ] **Hardware Acceleration**: Leverage RP2040 PIO or DMA-Memset for accelerated shape filling.
+- [ ] **UI Polish**: Add PWM-based smooth backlight dimming and basic animations.
+- [ ] **Power Management**: Implement deeper sleep states for low-power operation.

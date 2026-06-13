@@ -27,7 +27,6 @@
 - **Pure 16-bit Data Path**: Optimized both SPI and DMA to operate in synchronized 16-bit mode.
 - **Double Buffering**: Implemented a Ping-Pong buffer system (80KB total) for flicker-free animations.
 - **Asynchronous DMA**: Decoupled CPU and display, utilizing DMA for high-speed transfers.
-- **Event-Driven UI**: Implemented non-blocking input and "Dirty Flag" rendering.
 
 ---
 
@@ -37,21 +36,25 @@
 ### Accomplishments
 - **Bitmap Font Engine**: Integrated 5x7 font table and implemented `draw_char`/`draw_string` primitives.
 - **Dynamic Scaling**: Added size multiplier support for UI elements.
-- **Bounds Management**: Implemented pixel-level clipping for safe text rendering.
 
 ---
 
-## 2026-06-13 | Phase 05: Communication Layer Complete
+## 2026-06-12 | Phase 05: Communication Layer Complete
 **Spec Reference**: [Phase 05: Communication Layer](phase_docs/phase_05_communication_layer.md)
 
 ### Accomplishments
 - **Length-Prefixed Protocol**: Implemented a robust serial command parser that handles arbitrary message content, immune to delimiter collisions.
-- **Asynchronous RX**: Developed a non-blocking Serial parser utilizing a 512-byte ring buffer and state machine logic.
-- **UI Integration**: Connected dynamic agent data parsing with the rendering engine using a "Dirty Flag" trigger.
+- **Asynchronous RX**: Developed a non-blocking Serial parser utilizing a 512-byte ring buffer.
 
 ---
 
-## [Next Entry] | Phase 06: Application Logic
-**Spec Reference**: [Phase 06: Application Logic (Upcoming)](#)
+## 2026-06-13 | Phase 06: Application Logic Complete
+**Spec Reference**: [Phase 06: Application Logic](phase_docs/phase_06_application_logic.md)
 
-*Starting soon...*
+### Accomplishments
+- **UI Finite State Machine**: Architected an event-driven FSM for screen navigation (List, Detail, Action).
+- **Interactive Navigation**: Implemented intuitive button mappings, including a "Back" function (`PREV` in Detail view).
+- **System Integration**: Unified Communication, Graphics, and Font modules into a cohesive, interactive Agent Monitor dashboard.
+
+### Current Project Status: Baseline V1 Finished
+The system is now fully functional as a hardware-based agent monitor. The physical foundation is solid, and the documentation provides a audit trail of the engineering decisions made.
