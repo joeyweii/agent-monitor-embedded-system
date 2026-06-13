@@ -2,6 +2,7 @@
 #include "pico/stdlib.h"
 #include "display.h"
 #include "button.h"
+#include "protocol.h"
 
 int main() {
     stdio_init_all();
@@ -9,42 +10,62 @@ int main() {
     // Initialize Modules
     display_init();
     buttons_init();
+    protocol_init();
 
-    // Visual Test Pattern: Draw a border and a center square
+    // Initial Screen
     display_clear(COLOR_BLACK);
-    
-    // Draw Text
-    display_draw_string(5, 20, "AGENT MONITOR", COLOR_YELLOW, COLOR_BLACK, 1);
-    display_draw_string(10, 40, "Agent A: RUNNING", COLOR_GREEN, COLOR_BLACK, 1);
-    display_draw_string(10, 60, "Agent B: IDLE", COLOR_BLUE, COLOR_BLACK, 1);
-
+    display_draw_string(5, 5, "AGENT MONITOR", COLOR_YELLOW, COLOR_BLACK, 1);
     display_flush_async();
-
-    static uint8_t color_idx = 0;
-    uint16_t colors[] = {COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_YELLOW};
 
     while (true) {
         led_toggle();
 
-        // 1. Wait for previous DMA transfer to complete before drawing new frame
-        display_wait_ready();
+        // 1. Process Communication
+        protocol_update();
 
-        // 2. Process Input
+        // 2. Check for updates and render
+        bool needs_refresh = false;
+        for (int i = 0; i < MAX_AGENTS; i++) {
+            AgentData* agent = protocol_get_agent(i);
+            if (agent->is_active && agent->is_dirty) {
+                needs_refresh = true;
+                agent->is_dirty = false;
+            }
+        }
+
+        if (needs_refresh) {
+            display_clear(COLOR_BLACK);
+            display_draw_string(5, 5, "AGENT MONITOR", COLOR_YELLOW, COLOR_BLACK, 1);
+            
+            // Draw Agents
+            int y_offset = 25;
+            for (int i = 0; i < MAX_AGENTS; i++) {
+                AgentData* agent = protocol_get_agent(i);
+                if (agent->is_active) {
+                    char buffer[64];
+                    snprintf(buffer, sizeof(buffer), "A%d: %s", agent->id, agent->name);
+                    display_draw_string(5, y_offset, buffer, COLOR_WHITE, COLOR_BLACK, 1);
+                    display_draw_string(5, y_offset + 10, agent->status, COLOR_GREEN, COLOR_BLACK, 1);
+                    display_draw_string(5, y_offset + 20, agent->message, COLOR_BLUE, COLOR_BLACK, 1);
+                    y_offset += 40;
+                }
+            }
+            display_flush_async();
+        }
+
+        // 3. Process Input
         if (button_is_pressed(BTN_SELECT)) {
             display_clear(COLOR_WHITE);
             display_draw_string(20, 70, "APPROVED!", COLOR_BLACK, COLOR_WHITE, 1);
             display_flush_async();
             sleep_ms(500);
             
-            // Redraw pattern
+            // Force redraw pattern
             display_clear(COLOR_BLACK);
-            display_draw_string(5, 20, "AGENT MONITOR", COLOR_YELLOW, COLOR_BLACK, 1);
-            display_draw_string(10, 40, "Agent A: RUNNING", COLOR_GREEN, COLOR_BLACK, 1);
-            display_draw_string(10, 60, "Agent B: IDLE", COLOR_BLUE, COLOR_BLACK, 1);
             display_flush_async();
         }
 
-        sleep_ms(100);
+        sleep_ms(50);
     }
 
     return 0;

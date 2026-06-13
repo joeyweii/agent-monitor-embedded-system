@@ -1,6 +1,6 @@
 #include "font.h"
 
-// 5x7 font data (Column-major: 5 bytes per char)
+// Standard 5x7 font data (Column-major: 5 bytes per char, ASCII 32-126)
 const uint8_t font_5x7[95][5] = {
     {0x00, 0x00, 0x00, 0x00, 0x00}, // 32 Space
     {0x00, 0x00, 0x5F, 0x00, 0x00}, // 33 !

@@ -47,12 +47,14 @@ The CPU does not block during screen updates.
 *   **DMA Configuration**: 16-bit transfers from SRAM to SPI TX FIFO.
 
 ### 2.4 Communication Protocol
-A lightweight, robust text-based protocol over USB Serial:
-*   `SET:<id>:<status_enum>:<name>:<msg>\n` (Host to Pico)
-*   `ACTION:<id>:<result_enum>\n` (Pico to Host)
-*   `PING/PONG`: Heartbeat for connection monitoring.
+A robust, length-prefixed binary/text protocol over USB Serial:
+- `SET:<id>:<status_len>:<name_len>:<msg_len>:<payload>`
+- **Example**: `SET:1:7:7:24:RUNNING:Agent_A:Processing user query...`
+- **Benefit**: Immune to delimiter collisions; allows multi-sentence messages; memory-safe.
+- **Parsing**: Two-stage state machine that consumes header metadata, then exactly N payload bytes.
 
-## 3. UI State Machine
+
+### 2.5 UI State Machine
 The system operates as a finite state machine (FSM):
 *   **IDLE**: Low-power/Dimmed state.
 *   **LIST_VIEW**: Main carousel of active agents.

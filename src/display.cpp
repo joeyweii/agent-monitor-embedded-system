@@ -2,7 +2,6 @@
 #include "font.h"
 #include "hardware/gpio.h"
 #include "hardware/dma.h"
-#include <string.h>
 
 // Double Buffering Allocation (80KB total)
 static uint16_t buffer_0[LCD_WIDTH * LCD_HEIGHT];
