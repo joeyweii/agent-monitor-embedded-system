@@ -41,7 +41,17 @@
 
 ---
 
-## [Next Entry] | Phase 05: Communication Layer
-**Spec Reference**: [Phase 05: Communication Layer (Upcoming)](#)
+## 2026-06-13 | Phase 05: Communication Layer Complete
+**Spec Reference**: [Phase 05: Communication Layer](phase_docs/phase_05_communication_layer.md)
+
+### Accomplishments
+- **Length-Prefixed Protocol**: Implemented a robust serial command parser that handles arbitrary message content, immune to delimiter collisions.
+- **Asynchronous RX**: Developed a non-blocking Serial parser utilizing a 512-byte ring buffer and state machine logic.
+- **UI Integration**: Connected dynamic agent data parsing with the rendering engine using a "Dirty Flag" trigger.
+
+---
+
+## [Next Entry] | Phase 06: Application Logic
+**Spec Reference**: [Phase 06: Application Logic (Upcoming)](#)
 
 *Starting soon...*

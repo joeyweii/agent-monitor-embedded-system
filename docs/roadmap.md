@@ -28,10 +28,10 @@ This roadmap outlines the development phases for the Agent Monitor system.
 - [x] Verify text clipping to prevent memory corruption.
 
 ## Phase 5: Communication Layer
-- [ ] Implement Ring Buffer for Serial RX.
-- [ ] Develop text-based parser for `SET:<agent_data>` commands.
-- [ ] Implement Host-to-Device Heartbeat.
-- [ ] Add Device-to-Host confirmation for button actions.
+- [x] Implement Ring Buffer for Serial RX.
+- [x] Develop length-prefixed parser for SET commands.
+- [x] Implement Host-to-Device Heartbeat.
+- [x] Add Device-to-Host confirmation for button actions.
 
 ## Phase 6: Application Logic
 - [ ] Implement Finite State Machine (FSM) for navigation.
