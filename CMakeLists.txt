@@ -20,6 +20,7 @@ add_executable(agent_monitor
     src/button.cpp
     src/font.cpp
     src/protocol.cpp
+    src/ui.cpp
 )
 
 # Include headers

@@ -17,6 +17,7 @@
 #define COLOR_WHITE   0xFFFF
 #define COLOR_YELLOW  0xFFE0
 #define COLOR_MAGENTA 0xF81F
+#define COLOR_GRAY    0x8410
 
 // Pin Definitions
 #define PIN_SCK   18
