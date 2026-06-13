@@ -6,11 +6,13 @@
 
 static UIState current_state = STATE_LIST;
 static int selected_idx = 0;
+static int scroll_offset = 0;
 static uint32_t frame_counter = 0;
 
 void ui_init() {
     current_state = STATE_LIST;
     selected_idx = 0;
+    scroll_offset = 0;
     frame_counter = 0;
 }
 
@@ -57,7 +59,6 @@ void ui_update() {
             AgentData* agent = protocol_get_agent(i);
             if (agent->is_active) {
                 char buffer[64];
-                // Support 5 agents, removed 'A' prefix
                 snprintf(buffer, sizeof(buffer), "%c %d: %s", (i == selected_idx) ? '>' : ' ', agent->id, agent->name);
                 uint16_t color = (i == selected_idx) ? COLOR_WHITE : COLOR_GRAY;
                 display_draw_string(5, 25 + (i * 18), buffer, color, COLOR_BLACK, 1);
@@ -88,7 +89,7 @@ void ui_update() {
         display_draw_rect(2, 20, 1, LCD_HEIGHT-25, COLOR_GRAY); // Left
         display_draw_rect(LCD_WIDTH-2, 20, 1, LCD_HEIGHT-25, COLOR_GRAY); // Right
         
-        display_draw_string(10, 25, agent->name, COLOR_LIGHT_PINK, COLOR_BLACK, 1);
+        display_draw_string(10, 25, agent->name, COLOR_ROSE, COLOR_BLACK, 1);
         display_draw_rect(5, 35, LCD_WIDTH-10, 1, COLOR_GRAY); // Separator
         
         display_draw_string(10, 45, "Status:", COLOR_GRAY, COLOR_BLACK, 1);
@@ -96,7 +97,8 @@ void ui_update() {
         
         display_draw_rect(5, 58, LCD_WIDTH-10, 1, COLOR_GRAY); // Separator
         
-        display_draw_string(10, 70, agent->message, COLOR_WHITE, COLOR_BLACK, 1);
+        // Wrapped message with scroll
+        display_draw_string_wrapped(10, 70, agent->message, COLOR_WHITE, COLOR_BLACK, 1, LCD_WIDTH - 20, 10, scroll_offset);
     }
 
     display_flush_async();
@@ -107,19 +109,24 @@ void ui_handle_input() {
         if (current_state == STATE_LIST) {
             selected_idx = (selected_idx + MAX_AGENTS - 1) % MAX_AGENTS;
         } else if (current_state == STATE_DETAIL) {
-            current_state = STATE_LIST;
+            if (scroll_offset > 0) scroll_offset -= 10;
         }
         sleep_ms(200);
     } else if (button_is_pressed(BTN_NEXT)) {
         if (current_state == STATE_LIST) {
             selected_idx = (selected_idx + 1) % MAX_AGENTS;
+        } else if (current_state == STATE_DETAIL) {
+            scroll_offset += 10;
         }
         sleep_ms(200);
     } else if (button_is_pressed(BTN_SELECT)) {
         if (current_state == STATE_LIST) {
             if (protocol_get_agent(selected_idx)->is_active) {
                 current_state = STATE_DETAIL;
+                scroll_offset = 0; // Reset scroll
             }
+        } else if (current_state == STATE_DETAIL) {
+            current_state = STATE_LIST;
         }
         sleep_ms(200);
     }

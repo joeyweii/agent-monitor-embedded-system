@@ -4,43 +4,36 @@ import sys
 import random
 import threading
 
-# Usage:
-# 1. Ensure pyserial is installed: pip install pyserial
-# 2. Update the PORT variable to match your Pico device (e.g., /dev/tty.usbmodem101)
-# 3. Run the script: python3 tools/agent_stream.py
-#
-# Commands:
-# - ADD <id> <name>       : Register a new agent. Status defaults to DONE.
-# - RUN <id> <message>    : Transition agent to RUNNING state. 
-#                           After 3 seconds, it will randomly transition to DONE, ERROR, or INPUT.
-# - QUIT                  : Exit the simulator.
-
 # Update this to match your Pico's port
 PORT = '/dev/tty.usbmodem101' 
 BAUD = 115200
 
 # Agent storage
 agents = {}
-# Thread safe lock for agents dict
 agents_lock = threading.Lock()
 
 def send_agent_update(ser, agent_id, status, name, message):
-    # Construct the payload
     payload = status + name + message
     header = f"SET:{agent_id}:{len(status)}:{len(name)}:{len(message)}:"
     packet = header.encode('ascii') + payload.encode('ascii')
     
     print(f"\n[SEND] ID:{agent_id} | Status:{status} | Name:{name} | Msg:{message}")
     ser.write(packet)
-    time.sleep(0.1) # Small delay for buffer stability
+    time.sleep(0.1)
 
 def agent_worker(ser, aid):
-    """Background thread: Monitor individual agent state and handle simulated transition"""
-    time.sleep(3) # Simulate execution time
+    """Background thread: Random execution time (5-30s) and random terminal state"""
+    wait_time = random.uniform(5, 30)
+    print(f"[SIM] Agent {aid} will run for {wait_time:.1f}s")
+    time.sleep(wait_time)
     
     with agents_lock:
         if aid in agents and agents[aid]["status"] == "RUNNING":
-            final_states = [("DONE", "Success"), ("ERROR", "Failed"), ("INPUT", "Need approval")]
+            final_states = [
+                ("DONE", "Task completed successfully."),
+                ("ERROR", "Critical error in database connection! Please check logs."),
+                ("INPUT", "Waiting for human verification of parameters: X, Y, Z.")
+            ]
             res_status, res_msg = random.choice(final_states)
             agents[aid]["status"] = res_status
             agents[aid]["msg"] = res_msg
@@ -80,7 +73,6 @@ def run_simulator():
                         agents[aid]["status"] = "RUNNING"
                         agents[aid]["msg"] = msg
                         send_agent_update(ser, aid, "RUNNING", agents[aid]["name"], msg)
-                        # Start background thread to handle transition
                         threading.Thread(target=agent_worker, args=(ser, aid), daemon=True).start()
                     else:
                         print("Agent ID not found. ADD it first.")

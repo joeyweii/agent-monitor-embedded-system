@@ -20,6 +20,7 @@
 #define COLOR_GRAY    0x8410
 #define COLOR_CYAN    0x07FF
 #define COLOR_LIGHT_PINK 0xFAAC
+#define COLOR_ROSE    0xFDB7
 
 // Pin Definitions
 #define PIN_SCK   18
@@ -46,5 +47,6 @@ void display_wait_ready();
 // Text Rendering API
 void display_draw_char(int x, int y, char c, uint16_t color, uint16_t bg, uint8_t size);
 void display_draw_string(int x, int y, const char* str, uint16_t color, uint16_t bg, uint8_t size);
+void display_draw_string_wrapped(int x, int y, const char* str, uint16_t color, uint16_t bg, uint8_t size, int max_width, int line_height, int scroll_offset);
 
 #endif // DISPLAY_H

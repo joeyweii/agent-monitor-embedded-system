@@ -158,6 +158,29 @@ void display_draw_string(int x, int y, const char* str, uint16_t color, uint16_t
     }
 }
 
+void display_draw_string_wrapped(int x, int y, const char* str, uint16_t color, uint16_t bg, uint8_t size, int max_width, int line_height, int scroll_offset) {
+    int cur_x = x;
+    int cur_y = y;
+    int char_w = 6 * size;
+    int line_count = 0;
+
+    while (*str) {
+        if (cur_x + char_w > x + max_width) {
+            cur_x = x;
+            cur_y += line_height;
+            line_count++;
+        }
+        
+        // Only draw if within current scroll view
+        if (cur_y >= y + scroll_offset && cur_y < y + scroll_offset + (line_height * 5)) {
+            display_draw_char(cur_x, cur_y - scroll_offset, *str, color, bg, size);
+        }
+        
+        cur_x += char_w;
+        str++;
+    }
+}
+
 bool display_is_busy() {
     return dma_channel_is_busy(dma_chan);
 }
