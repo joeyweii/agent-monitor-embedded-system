@@ -6,10 +6,12 @@
 
 static UIState current_state = STATE_LIST;
 static int selected_idx = 0;
+static uint32_t frame_counter = 0;
 
 void ui_init() {
     current_state = STATE_LIST;
     selected_idx = 0;
+    frame_counter = 0;
 }
 
 void ui_draw_header() {
@@ -44,15 +46,21 @@ void ui_update() {
             AgentData* agent = protocol_get_agent(i);
             if (agent->is_active) {
                 char buffer[64];
-                // Removed 'A' prefix
                 snprintf(buffer, sizeof(buffer), "%c %d: %s", (i == selected_idx) ? '>' : ' ', agent->id, agent->name);
                 uint16_t color = (i == selected_idx) ? COLOR_WHITE : COLOR_GRAY;
                 display_draw_string(5, 25 + (i * 20), buffer, color, COLOR_BLACK, 1);
                 
                 // Draw Icon based on status
                 if (strcmp(agent->status, "RUNNING") == 0) {
-                   // Placeholder for animation in next step
-                   display_draw_rect(100, 25 + (i * 20), 5, 5, COLOR_BLUE);
+                   int frame = (frame_counter / 5) % 4;
+                   int x_pos = 100;
+                   int y_pos = 25 + (i * 20);
+                   switch (frame) {
+                        case 0: display_draw_rect(x_pos, y_pos, 5, 2, COLOR_BLUE); break;
+                        case 1: display_draw_rect(x_pos+3, y_pos, 2, 5, COLOR_BLUE); break;
+                        case 2: display_draw_rect(x_pos, y_pos+3, 5, 2, COLOR_BLUE); break;
+                        case 3: display_draw_rect(x_pos, y_pos, 2, 5, COLOR_BLUE); break;
+                   }
                 } else if (strcmp(agent->status, "DONE") == 0) {
                     ui_draw_icon(100, 25 + (i * 20), 0);
                 } else if (strcmp(agent->status, "ERROR") == 0) {
@@ -62,6 +70,7 @@ void ui_update() {
                 }
             }
         }
+        frame_counter++;
     } else if (current_state == STATE_DETAIL) {
         AgentData* agent = protocol_get_agent(selected_idx);
         display_draw_string(5, 25, agent->name, COLOR_YELLOW, COLOR_BLACK, 1);
@@ -91,6 +100,7 @@ void ui_handle_input() {
         if (current_state == STATE_LIST) current_state = STATE_DETAIL;
         else if (current_state == STATE_DETAIL) current_state = STATE_ACTION;
         else if (current_state == STATE_ACTION) {
+            printf("ACTION:%d:ACK\n", selected_idx);
             current_state = STATE_LIST;
         }
         sleep_ms(200);
