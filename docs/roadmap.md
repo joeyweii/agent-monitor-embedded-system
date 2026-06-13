@@ -2,6 +2,8 @@
 
 This roadmap outlines the development phases for the Agent Monitor system.
 
+## Milestone 1: Baseline System (Functional)
+
 ## Phase 1: Hardware Verification
 - [x] Integrate Raspberry Pi Pico with 1.8" ST7735 LCD.
 - [x] Establish basic SPI communication.
@@ -39,11 +41,30 @@ This roadmap outlines the development phases for the Agent Monitor system.
 - [x] Design Detail View for expanded agent status.
 - [x] Implement interactive Action confirmation logic.
 
-## Future Improvements
-- [ ] **High-Performance Interrupts**:
-    - Implement formal DMA Interrupt Service Routine (ISR) to decouple buffer swapping from the main loop.
-    - Implement UART RX Interrupts with a large hardware-level Ring Buffer to prevent data loss during heavy rendering.
-- [ ] **Partial Rendering**: Implement "Dirty Rectangle" logic to only flush modified screen regions, significantly increasing FPS and reducing SPI traffic.
+---
+
+## Milestone 2: Professional UI & Performance
+
+## Phase 7: Advanced UI Components
+- [ ] Implement "Inverted Header" style for the main title (Yellow bar with Black text).
+- [ ] Create graphical status icons (Done, Error, Waiting Input).
+- [ ] Implement dynamic "Running" animation (Pulse or Spinner widget).
+- [ ] Add List View layout optimization to show `<id>:<name> [ICON]`.
+
+## Phase 8: Interrupt-Driven Architecture
+- [ ] Implement UART RX Interrupt for serial data to prevent packet loss.
+- [ ] Implement DMA Transfer-Complete Interrupt for precise buffer swapping.
+
+## Phase 9: Partial Refresh (Dirty Rectangles)
+- [ ] Implement logic to track "Dirty Rectangles" (only redraw/flush modified areas).
+- [ ] Optimize SPI bandwidth for high-frequency UI animations.
+
+## Phase 10: Power Management
+- [ ] Implement software-controlled backlight dimming (PWM).
+- [ ] Develop "Sleep Mode" logic (LCD off/CPU dormant) after inactivity timeout.
+- [ ] Implement wake-on-interrupt for physical buttons.
+
+---
+
+## Future Improvements / V2
 - [ ] **Hardware Acceleration**: Leverage RP2040 PIO or DMA-Memset for accelerated shape filling.
-- [ ] **UI Polish**: Add PWM-based smooth backlight dimming and basic animations.
-- [ ] **Power Management**: Implement deeper sleep states for low-power operation.

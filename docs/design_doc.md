@@ -34,51 +34,52 @@ graph TD
     Buttons[3x Tactile Buttons] --> |GPIO IRQ| StateMachine
 ```
 
-### 2.2 Double Buffering (Ping-Pong)
+### 2.2 Hardware Design
+For detailes, refer to the **[Breadboard Layout & Wiring Guide](breadboard_layout.md)**.
+
+### 2.3 Double Buffering (Ping-Pong)
 To achieve flicker-free animations and high-performance rendering, the system employs a **Double Buffering** strategy:
 *   **Back Buffer**: The CPU performs all drawing operations (clearing, rectangles, text) into this 40KB SRAM array.
 *   **Front Buffer**: Currently being read by the DMA controller and transmitted to the LCD.
 *   **Synchronization**: Upon completion of a frame, the pointers are swapped. The system uses a DMA Interrupt to track transfer completion.
 
-### 2.3 Asynchronous DMA SPI
+### 2.4 Asynchronous DMA SPI
 The CPU does not block during screen updates.
 *   **Transfer Size**: 128 * 160 * 2 = 40,960 bytes per frame.
 *   **SPI Speed**: 24MHz (target).
 *   **DMA Configuration**: 16-bit transfers from SRAM to SPI TX FIFO.
 
-### 2.4 Communication Protocol
+### 2.5 Communication Protocol
 A robust, length-prefixed binary/text protocol over USB Serial:
 - `SET:<id>:<status_len>:<name_len>:<msg_len>:<payload>`
 - **Example**: `SET:1:7:7:24:RUNNING:Agent_A:Processing user query...`
 - **Benefit**: Immune to delimiter collisions; allows multi-sentence messages; memory-safe.
 - **Parsing**: Two-stage state machine that consumes header metadata, then exactly N payload bytes.
 
-
-### 2.5 UI State Machine
+### 2.6 UI State Machine
 The system operates as a finite state machine (FSM):
 *   **IDLE**: Low-power/Dimmed state.
 *   **LIST_VIEW**: Main carousel of active agents.
 *   **DETAIL_VIEW**: Expanded view with action buttons (Approve/Reject).
 *   **ERROR_VIEW**: System-wide alert for connection loss.
 
-## 4. Hardware Design
-For detailes, refer to the **[Breadboard Layout & Wiring Guide](breadboard_layout.md)**.
+### 2.7 Power Management
+As a portable-ready peripheral, power efficiency is a core design pillar:
+*   **Dynamic Backlight**: PWM-based dimming for idle states.
+*   **Deep Sleep**: Utilization of RP2040 `dormant` mode during extended inactivity.
+*   **Event-based Wake**: Hardware interrupts on button pins to wake the processor.
 
-### 4.1 Key Hardware Components
-*   **Microcontroller**: RP2040 (Raspberry Pi Pico).
-*   **Display**: 1.8" ST7735 TFT LCD.
-*   **Input**: 3x Tactile Buttons (Active-Low).
-...
-## 5. Development Roadmap
-The project is divided into six logical phases:
-1.  **Phase 1: Hardware Verification**: Core LCD and button integration (Complete).
-2.  **Phase 2: Graphics Foundation**: Memory-backed rendering via Framebuffer.
-3.  **Phase 3: Performance Optimization**: Asynchronous DMA and Double Buffering.
-4.  **Phase 4: Information Layer**: Bitmap font engine and text rendering.
-5.  **Phase 5: Communication Layer**: Robust serial protocol for host communication.
-6.  **Phase 6: Application Logic**: UI state machine and smartwatch UX.
+## 3. Development Roadmap
+For detailes, refer to the **[Roadmap](roadmap.md)**.
+The project is divided into logical milestones:
 
-## 6. Project Goals
+### Milestone 1: Baseline System (Phases 1-6)
+Core infrastructure including driver, graphics foundation, communication protocol, and basic UI navigation.
+
+### Milestone 2: Professional UI & Performance (Phases 7-10)
+Advanced graphical widgets, interrupt-driven core, partial screen rendering, and power management.
+
+## 4. Project Goals
 *   **Performance**: Stable 30+ FPS UI.
 *   **Visibility**: Real-time status for up to 4 concurrent agents.
 *   **Reliability**: Robust handling of serial noise and common-ground stability.
