@@ -46,10 +46,11 @@ This roadmap outlines the development phases for the Agent Monitor system.
 ## Milestone 2: Professional UI & Performance
 
 ## Phase 7: Advanced UI Components
-- [ ] Implement "Inverted Header" style for the main title (Yellow bar with Black text).
-- [ ] Create graphical status icons (Done, Error, Waiting Input).
-- [ ] Implement dynamic "Running" animation (Pulse or Spinner widget).
-- [ ] Add List View layout optimization to show `<id>:<name> [ICON]`.
+- [x] Implement "Inverted Header" style for the main title (Yellow bar with Black text).
+- [x] Create graphical status icons (Done, Error, Waiting Input).
+- [x] Implement dynamic "Running" animation (Pulse or Spinner widget).
+- [x] Add List View layout optimization to show `<id>:<name> [ICON]`.
+- [x] Implement text wrapping and scrolling in Detail View.
 
 ## Phase 8: Interrupt-Driven Architecture
 - [ ] Implement UART RX Interrupt for serial data to prevent packet loss.
