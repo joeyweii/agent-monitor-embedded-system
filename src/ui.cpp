@@ -19,21 +19,32 @@ void ui_draw_header() {
     display_draw_string(25, 4, "AGENT MONITOR", COLOR_BLACK, COLOR_YELLOW, 1);
 }
 
-void ui_draw_icon(int x, int y, int type) {
-    if (type == 0) { // DONE (Green Checkmark)
-        display_draw_pixel(x+2, y+5, COLOR_GREEN);
-        display_draw_pixel(x+3, y+6, COLOR_GREEN);
-        display_draw_pixel(x+4, y+7, COLOR_GREEN);
-        display_draw_pixel(x+5, y+4, COLOR_GREEN);
-        display_draw_pixel(x+6, y+3, COLOR_GREEN);
-    } else if (type == 1) { // ERROR (Red X)
-        display_draw_pixel(x+2, y+2, COLOR_RED);
-        display_draw_pixel(x+3, y+3, COLOR_RED);
-        display_draw_pixel(x+4, y+4, COLOR_RED);
-        display_draw_pixel(x+2, y+4, COLOR_RED);
-        display_draw_pixel(x+4, y+2, COLOR_RED);
-    } else if (type == 2) { // INPUT (Yellow Question Mark)
-        display_draw_string(x, y, "?", COLOR_YELLOW, COLOR_BLACK, 1);
+// Returns the color associated with a status string
+uint16_t get_status_color(const char* status) {
+    if (strcmp(status, "RUNNING") == 0) return COLOR_CYAN;
+    if (strcmp(status, "DONE") == 0)    return COLOR_GREEN;
+    if (strcmp(status, "ERROR") == 0)   return COLOR_RED;
+    if (strcmp(status, "INPUT") == 0)   return COLOR_YELLOW;
+    return COLOR_WHITE;
+}
+
+void ui_draw_icon(int x, int y, const char* status) {
+    uint16_t color = get_status_color(status);
+    
+    if (strcmp(status, "DONE") == 0) { // Green Checkmark
+        display_draw_pixel(x+2, y+5, color);
+        display_draw_pixel(x+3, y+6, color);
+        display_draw_pixel(x+4, y+7, color);
+        display_draw_pixel(x+5, y+4, color);
+        display_draw_pixel(x+6, y+3, color);
+    } else if (strcmp(status, "ERROR") == 0) { // Red X
+        display_draw_pixel(x+2, y+2, color);
+        display_draw_pixel(x+3, y+3, color);
+        display_draw_pixel(x+4, y+4, color);
+        display_draw_pixel(x+2, y+4, color);
+        display_draw_pixel(x+4, y+2, color);
+    } else if (strcmp(status, "INPUT") == 0) { // Yellow ?
+        display_draw_string(x, y, "?", color, COLOR_BLACK, 1);
     }
 }
 
@@ -46,38 +57,46 @@ void ui_update() {
             AgentData* agent = protocol_get_agent(i);
             if (agent->is_active) {
                 char buffer[64];
+                // Support 5 agents, removed 'A' prefix
                 snprintf(buffer, sizeof(buffer), "%c %d: %s", (i == selected_idx) ? '>' : ' ', agent->id, agent->name);
                 uint16_t color = (i == selected_idx) ? COLOR_WHITE : COLOR_GRAY;
-                display_draw_string(5, 25 + (i * 20), buffer, color, COLOR_BLACK, 1);
+                display_draw_string(5, 25 + (i * 18), buffer, color, COLOR_BLACK, 1);
                 
                 // Draw Icon based on status
                 if (strcmp(agent->status, "RUNNING") == 0) {
                    int frame = (frame_counter / 5) % 4;
-                   int x_pos = 100;
-                   int y_pos = 25 + (i * 20);
+                   int x_pos = 105;
+                   int y_pos = 25 + (i * 18);
                    switch (frame) {
-                        case 0: display_draw_rect(x_pos, y_pos, 5, 2, COLOR_BLUE); break;
-                        case 1: display_draw_rect(x_pos+3, y_pos, 2, 5, COLOR_BLUE); break;
-                        case 2: display_draw_rect(x_pos, y_pos+3, 5, 2, COLOR_BLUE); break;
-                        case 3: display_draw_rect(x_pos, y_pos, 2, 5, COLOR_BLUE); break;
+                        case 0: display_draw_rect(x_pos, y_pos, 5, 2, COLOR_CYAN); break;
+                        case 1: display_draw_rect(x_pos+3, y_pos, 2, 5, COLOR_CYAN); break;
+                        case 2: display_draw_rect(x_pos, y_pos+3, 5, 2, COLOR_CYAN); break;
+                        case 3: display_draw_rect(x_pos, y_pos, 2, 5, COLOR_CYAN); break;
                    }
-                } else if (strcmp(agent->status, "DONE") == 0) {
-                    ui_draw_icon(100, 25 + (i * 20), 0);
-                } else if (strcmp(agent->status, "ERROR") == 0) {
-                    ui_draw_icon(100, 25 + (i * 20), 1);
-                } else if (strcmp(agent->status, "INPUT") == 0) {
-                    ui_draw_icon(100, 25 + (i * 20), 2);
+                } else {
+                    ui_draw_icon(105, 25 + (i * 18), agent->status);
                 }
             }
         }
         frame_counter++;
     } else if (current_state == STATE_DETAIL) {
         AgentData* agent = protocol_get_agent(selected_idx);
-        display_draw_string(5, 25, agent->name, COLOR_YELLOW, COLOR_BLACK, 1);
-        display_draw_string(5, 45, agent->status, COLOR_GREEN, COLOR_BLACK, 1);
-        display_draw_string(5, 65, agent->message, COLOR_BLUE, COLOR_BLACK, 1);
-    } else if (current_state == STATE_ACTION) {
-        display_draw_string(20, 70, "CONFIRM ACTION?", COLOR_RED, COLOR_BLACK, 1);
+        
+        // Draw Card Border (Hollow)
+        display_draw_rect(2, 20, LCD_WIDTH-4, 1, COLOR_GRAY); // Top
+        display_draw_rect(2, LCD_HEIGHT-5, LCD_WIDTH-4, 1, COLOR_GRAY); // Bottom
+        display_draw_rect(2, 20, 1, LCD_HEIGHT-25, COLOR_GRAY); // Left
+        display_draw_rect(LCD_WIDTH-2, 20, 1, LCD_HEIGHT-25, COLOR_GRAY); // Right
+        
+        display_draw_string(10, 25, agent->name, COLOR_LIGHT_PINK, COLOR_BLACK, 1);
+        display_draw_rect(5, 35, LCD_WIDTH-10, 1, COLOR_GRAY); // Separator
+        
+        display_draw_string(10, 45, "Status:", COLOR_GRAY, COLOR_BLACK, 1);
+        display_draw_string(60, 45, agent->status, get_status_color(agent->status), COLOR_BLACK, 1);
+        
+        display_draw_rect(5, 58, LCD_WIDTH-10, 1, COLOR_GRAY); // Separator
+        
+        display_draw_string(10, 70, agent->message, COLOR_WHITE, COLOR_BLACK, 1);
     }
 
     display_flush_async();
@@ -97,11 +116,10 @@ void ui_handle_input() {
         }
         sleep_ms(200);
     } else if (button_is_pressed(BTN_SELECT)) {
-        if (current_state == STATE_LIST) current_state = STATE_DETAIL;
-        else if (current_state == STATE_DETAIL) current_state = STATE_ACTION;
-        else if (current_state == STATE_ACTION) {
-            printf("ACTION:%d:ACK\n", selected_idx);
-            current_state = STATE_LIST;
+        if (current_state == STATE_LIST) {
+            if (protocol_get_agent(selected_idx)->is_active) {
+                current_state = STATE_DETAIL;
+            }
         }
         sleep_ms(200);
     }

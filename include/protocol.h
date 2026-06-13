@@ -3,7 +3,7 @@
 
 #include "pico/stdlib.h"
 
-#define MAX_AGENTS 4
+#define MAX_AGENTS 5
 #define MAX_NAME_LEN 16
 #define MAX_STATUS_LEN 16
 #define MAX_MSG_LEN 64

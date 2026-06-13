@@ -5,8 +5,7 @@
 
 typedef enum {
     STATE_LIST,
-    STATE_DETAIL,
-    STATE_ACTION
+    STATE_DETAIL
 } UIState;
 
 void ui_init();
