@@ -20,6 +20,10 @@ static volatile bool dma_transfer_complete = true;
 void dma_handler() {
     if (dma_hw->ints0 & (1u << dma_chan)) {
         dma_hw->ints0 = 1u << dma_chan; // Clear the interrupt
+        
+        // Wait for SPI FIFO to be empty and last bit to be sent
+        while (spi_is_busy(SPI_PORT));
+        
         dma_transfer_complete = true;
         gpio_put(PIN_CS, 1); // Release CS after transfer completes
     }
