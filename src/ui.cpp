@@ -1,19 +1,52 @@
 #include "ui.h"
 #include "display.h"
 #include "button.h"
+#include "pico/time.h"
+#include "hardware/timer.h"
 #include <stdio.h>
 #include <string.h>
 
-static UIState current_state = STATE_LIST;
-static int selected_idx = 0;
-static int scroll_offset = 0;
+UIState current_state = STATE_LIST;
+int selected_idx = 0;
+int scroll_offset = 0;
+absolute_time_t last_button_time = {0};
 static uint32_t frame_counter = 0;
+volatile bool ui_dirty_flag = true;
+
+static struct repeating_timer animation_timer;
+static bool timer_running = false;
+
+uint16_t get_status_color(AgentStatus status);
+
+bool ui_timer_callback(struct repeating_timer *t) {
+    ui_dirty_flag = true;
+    return true; // Keep repeating
+}
+
+void ui_update_animation_timer() {
+    bool any_running = false;
+    for (int i = 0; i < MAX_AGENTS; i++) {
+        if (protocol_get_agent(i)->status == AGENT_STATUS_RUNNING) {
+            any_running = true;
+            break;
+        }
+    }
+
+    if (any_running && !timer_running) {
+        add_repeating_timer_ms(100, ui_timer_callback, NULL, &animation_timer);
+        timer_running = true;
+    } else if (!any_running && timer_running) {
+        cancel_repeating_timer(&animation_timer);
+        timer_running = false;
+    }
+}
 
 void ui_init() {
     current_state = STATE_LIST;
     selected_idx = 0;
     scroll_offset = 0;
     frame_counter = 0;
+    last_button_time = get_absolute_time();
 }
 
 void ui_draw_header() {
@@ -21,36 +54,49 @@ void ui_draw_header() {
     display_draw_string(25, 4, "AGENT MONITOR", COLOR_BLACK, COLOR_YELLOW, 1);
 }
 
-// Returns the color associated with a status string
-uint16_t get_status_color(const char* status) {
-    if (strcmp(status, "RUNNING") == 0) return COLOR_CYAN;
-    if (strcmp(status, "DONE") == 0)    return COLOR_GREEN;
-    if (strcmp(status, "ERROR") == 0)   return COLOR_RED;
-    if (strcmp(status, "INPUT") == 0)   return COLOR_YELLOW;
-    return COLOR_WHITE;
+uint16_t get_status_color(AgentStatus status) {
+    switch (status) {
+        case AGENT_STATUS_RUNNING: return COLOR_CYAN;
+        case AGENT_STATUS_DONE:    return COLOR_GREEN;
+        case AGENT_STATUS_ERROR:   return COLOR_RED;
+        case AGENT_STATUS_INPUT:   return COLOR_YELLOW;
+        default:                   return COLOR_WHITE;
+    }
 }
 
-void ui_draw_icon(int x, int y, const char* status) {
+const char* status_to_string(AgentStatus status) {
+    switch (status) {
+        case AGENT_STATUS_RUNNING: return "RUNNING";
+        case AGENT_STATUS_DONE:    return "DONE";
+        case AGENT_STATUS_ERROR:   return "ERROR";
+        case AGENT_STATUS_INPUT:   return "INPUT";
+        default:                   return "UNKNOWN";
+    }
+}
+
+void ui_draw_icon(int x, int y, AgentStatus status) {
     uint16_t color = get_status_color(status);
     
-    if (strcmp(status, "DONE") == 0) { // Green Checkmark
+    if (status == AGENT_STATUS_DONE) { // Green Checkmark
         display_draw_pixel(x+2, y+5, color);
         display_draw_pixel(x+3, y+6, color);
         display_draw_pixel(x+4, y+7, color);
         display_draw_pixel(x+5, y+4, color);
         display_draw_pixel(x+6, y+3, color);
-    } else if (strcmp(status, "ERROR") == 0) { // Red X
+    } else if (status == AGENT_STATUS_ERROR) { // Red X
         display_draw_pixel(x+2, y+2, color);
         display_draw_pixel(x+3, y+3, color);
         display_draw_pixel(x+4, y+4, color);
         display_draw_pixel(x+2, y+4, color);
         display_draw_pixel(x+4, y+2, color);
-    } else if (strcmp(status, "INPUT") == 0) { // Yellow ?
+    } else if (status == AGENT_STATUS_INPUT) { // Yellow ?
         display_draw_string(x, y, "?", color, COLOR_BLACK, 1);
     }
 }
 
 void ui_update() {
+    ui_update_animation_timer(); // Manage animation timer dynamically
+    
     display_clear(COLOR_BLACK);
     ui_draw_header();
 
@@ -64,8 +110,8 @@ void ui_update() {
                 display_draw_string(5, 25 + (i * 18), buffer, color, COLOR_BLACK, 1);
                 
                 // Draw Icon based on status
-                if (strcmp(agent->status, "RUNNING") == 0) {
-                   int frame = (frame_counter / 5) % 4;
+                if (agent->status == AGENT_STATUS_RUNNING) {
+                   int frame = (frame_counter) % 4;
                    int x_pos = 105;
                    int y_pos = 25 + (i * 18);
                    switch (frame) {
@@ -93,41 +139,12 @@ void ui_update() {
         display_draw_rect(5, 35, LCD_WIDTH-10, 1, COLOR_GRAY); // Separator
         
         display_draw_string(10, 45, "Status:", COLOR_GRAY, COLOR_BLACK, 1);
-        display_draw_string(60, 45, agent->status, get_status_color(agent->status), COLOR_BLACK, 1);
+        display_draw_string(60, 45, status_to_string(agent->status), get_status_color(agent->status), COLOR_BLACK, 1);
         
         display_draw_rect(5, 58, LCD_WIDTH-10, 1, COLOR_GRAY); // Separator
         
-        // Wrapped message with scroll
-        display_draw_string_wrapped(10, 70, agent->message, COLOR_WHITE, COLOR_BLACK, 1, LCD_WIDTH - 20, 10, scroll_offset);
+        display_draw_string_with_scroll(10, 70, agent->message, COLOR_WHITE, COLOR_BLACK, 1, LCD_WIDTH - 20, 10, scroll_offset);
     }
 
     display_flush_async();
-}
-
-void ui_handle_input() {
-    if (button_is_pressed(BTN_PREV)) {
-        if (current_state == STATE_LIST) {
-            selected_idx = (selected_idx + MAX_AGENTS - 1) % MAX_AGENTS;
-        } else if (current_state == STATE_DETAIL) {
-            if (scroll_offset > 0) scroll_offset -= 10;
-        }
-        sleep_ms(200);
-    } else if (button_is_pressed(BTN_NEXT)) {
-        if (current_state == STATE_LIST) {
-            selected_idx = (selected_idx + 1) % MAX_AGENTS;
-        } else if (current_state == STATE_DETAIL) {
-            scroll_offset += 10;
-        }
-        sleep_ms(200);
-    } else if (button_is_pressed(BTN_SELECT)) {
-        if (current_state == STATE_LIST) {
-            if (protocol_get_agent(selected_idx)->is_active) {
-                current_state = STATE_DETAIL;
-                scroll_offset = 0; // Reset scroll
-            }
-        } else if (current_state == STATE_DETAIL) {
-            current_state = STATE_LIST;
-        }
-        sleep_ms(200);
-    }
 }

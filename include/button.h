@@ -14,7 +14,11 @@
 // API Functions
 void buttons_init();
 bool button_is_pressed(uint pin);
+void handle_button_event(uint gpio);
 void led_set(bool state);
 void led_toggle();
+
+extern volatile bool button_event_flag;
+extern volatile uint target_button_gpio;
 
 #endif // BUTTON_H

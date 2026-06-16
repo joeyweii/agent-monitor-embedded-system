@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
+#include "hardware/sync.h"
 #include "display.h"
 #include "button.h"
 #include "protocol.h"
@@ -15,18 +16,31 @@ int main() {
     ui_init();
 
     while (true) {
+        // Tracks whether the main loop is actively running
         led_toggle();
 
-        // 1. Process Communication
-        protocol_update();
+        // Process UART Communication
+        if (protocol_event_flag) {
+            handle_protocol_event();
+            protocol_event_flag = false;
+            ui_dirty_flag = true;
+        }
 
-        // 2. Process Input
-        ui_handle_input();
+        // Process Button Event
+        if (button_event_flag) {
+            handle_button_event(target_button_gpio);
+            button_event_flag = false;
+            ui_dirty_flag = true;
+        }
 
-        // 3. Render
-        ui_update();
+        // Render
+        if (ui_dirty_flag && !display_is_busy()) {
+            ui_update();
+            ui_dirty_flag = false;
+        }
 
-        sleep_ms(50);
+        // Wait for interrupt (DMA, Serial, or Timer)
+        __wfi();
     }
 
     return 0;

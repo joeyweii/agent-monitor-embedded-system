@@ -47,6 +47,6 @@ void display_wait_ready();
 // Text Rendering API
 void display_draw_char(int x, int y, char c, uint16_t color, uint16_t bg, uint8_t size);
 void display_draw_string(int x, int y, const char* str, uint16_t color, uint16_t bg, uint8_t size);
-void display_draw_string_wrapped(int x, int y, const char* str, uint16_t color, uint16_t bg, uint8_t size, int max_width, int line_height, int scroll_offset);
+void display_draw_string_with_scroll(int x, int y, const char* str, uint16_t color, uint16_t bg, uint8_t size, int max_width, int line_height, int scroll_offset);
 
 #endif // DISPLAY_H

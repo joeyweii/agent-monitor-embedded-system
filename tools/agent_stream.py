@@ -10,7 +10,20 @@ BAUD = 115200
 
 # Agent storage
 agents = {}
+# Thread safe lock for agents dict
 agents_lock = threading.Lock()
+
+def read_pico_output(ser):
+    """Background thread: Monitor Pico's printf output"""
+    while ser.is_open:
+        try:
+            if ser.in_waiting > 0:
+                line = ser.readline().decode('ascii', errors='ignore').strip()
+                if line:
+                    print(f"\n[PICO LOG]: {line}")
+        except Exception as e:
+            break
+        time.sleep(0.05)
 
 def send_agent_update(ser, agent_id, status, name, message):
     payload = status + name + message
@@ -22,18 +35,13 @@ def send_agent_update(ser, agent_id, status, name, message):
     time.sleep(0.1)
 
 def agent_worker(ser, aid):
-    """Background thread: Random execution time (5-30s) and random terminal state"""
-    wait_time = random.uniform(5, 30)
-    print(f"[SIM] Agent {aid} will run for {wait_time:.1f}s")
+    """Background thread: Simulate agent lifecycle"""
+    wait_time = random.uniform(5, 10)
     time.sleep(wait_time)
     
     with agents_lock:
         if aid in agents and agents[aid]["status"] == "RUNNING":
-            final_states = [
-                ("DONE", "Task completed successfully."),
-                ("ERROR", "Critical error in database connection! Please check logs."),
-                ("INPUT", "Waiting for human verification of parameters: X, Y, Z.")
-            ]
+            final_states = [("DONE", "Success"), ("ERROR", "Failed"), ("INPUT", "Need approval")]
             res_status, res_msg = random.choice(final_states)
             agents[aid]["status"] = res_status
             agents[aid]["msg"] = res_msg
@@ -46,6 +54,10 @@ def run_simulator():
     except Exception as e:
         print(f"Error: Could not open {PORT}. {e}")
         sys.exit(1)
+
+    # Start background thread to monitor Pico output
+    monitor_thread = threading.Thread(target=read_pico_output, args=(ser,), daemon=True)
+    monitor_thread.start()
 
     print("\n--- Interactive Agent Simulator ---")
     print("ADD <id> <name>          - Add a new agent (Default: DONE)")

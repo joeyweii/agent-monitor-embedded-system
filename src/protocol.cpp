@@ -14,13 +14,26 @@
  */
 
 #include "protocol.h"
+#include "ring_buffer.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "tusb.h"
 
 static AgentData agents[MAX_AGENTS];
-static uint8_t rx_buffer[512];
-static int rx_idx = 0;
+static ring_buffer_t rx_ring;
+volatile bool protocol_event_flag = false;
+
+// TinyUSB RX Callback (Interrupt Context)
+// This function is called automatically by the USB stack when data arrives.
+void tud_cdc_rx_cb(uint8_t itf) {
+    while (tud_cdc_available()) {
+        uint8_t c = tud_cdc_read_char();
+        if (ring_buffer_push(&rx_ring, c)) {
+            protocol_event_flag = true;
+        }
+    }
+}
 
 typedef enum {
     STATE_WAIT_FOR_CMD,
@@ -33,61 +46,70 @@ static uint8_t header[4]; // id, slen, nlen, mlen
 static int header_idx = 0;
 static int payload_total = 0;
 static int payload_idx = 0;
+static uint8_t payload_buffer[MAX_MSG_LEN + MAX_NAME_LEN + MAX_STATUS_LEN];
+
+AgentStatus string_to_status(const char* status_str) {
+    if (strcmp(status_str, "RUNNING") == 0) return AGENT_STATUS_RUNNING;
+    if (strcmp(status_str, "INPUT") == 0) return AGENT_STATUS_INPUT;
+    if (strcmp(status_str, "ERROR") == 0) return AGENT_STATUS_ERROR;
+    return AGENT_STATUS_DONE;
+}
 
 void protocol_init() {
     memset(agents, 0, sizeof(agents));
-    for (int i = 0; i < MAX_AGENTS; i++) agents[i].id = i;
+    for (int i = 0; i < MAX_AGENTS; i++) {
+        agents[i].id = i;
+        agents[i].status = AGENT_STATUS_DONE;
+    }
+    ring_buffer_init(&rx_ring);
 }
 
-void protocol_update() {
-    while (true) {
-        int c = getchar_timeout_us(100); 
-        if (c == PICO_ERROR_TIMEOUT) break;
-
+void handle_protocol_event() {
+    uint8_t c;
+    // Process all bytes currently in the ring buffer
+    while (ring_buffer_pop(&rx_ring, &c)) {
         if (state == STATE_WAIT_FOR_CMD) {
-            rx_buffer[rx_idx++] = (uint8_t)c;
-            if (rx_idx >= 4) {
-                if (strncmp((char*)rx_buffer, "SET:", 4) == 0) {
-                    state = STATE_READ_HEADER;
-                    header_idx = 0;
-                    rx_idx = 0;
-                } else {
-                    memmove(rx_buffer, rx_buffer + 1, rx_idx - 1);
-                    rx_idx--;
-                }
+            static uint8_t cmd_buf[4] = {0};
+            memmove(cmd_buf, cmd_buf + 1, 3);
+            cmd_buf[3] = c;
+            if (strncmp((char*)cmd_buf, "SET:", 4) == 0) {
+                state = STATE_READ_HEADER;
+                header_idx = 0;
             }
         } else if (state == STATE_READ_HEADER) {
-            rx_buffer[rx_idx++] = (uint8_t)c;
+            static uint8_t val_buf[8];
+            static int val_idx = 0;
             if (c == ':') {
-                rx_buffer[rx_idx - 1] = '\0';
-                header[header_idx++] = atoi((char*)rx_buffer);
-                rx_idx = 0;
+                val_buf[val_idx] = '\0';
+                header[header_idx++] = atoi((char*)val_buf);
+                val_idx = 0;
                 if (header_idx == 4) {
                     payload_total = header[1] + header[2] + header[3];
                     state = STATE_READ_PAYLOAD;
                     payload_idx = 0;
-                    rx_idx = 0;
                 }
+            } else {
+                val_buf[val_idx++] = c;
             }
         } else if (state == STATE_READ_PAYLOAD) {
-            rx_buffer[rx_idx++] = (uint8_t)c;
-            payload_idx++; 
+            payload_buffer[payload_idx++] = c;
             if (payload_idx >= payload_total) {
                 uint8_t id = header[0];
                 if (id < MAX_AGENTS) {
-                    memcpy(agents[id].status, rx_buffer, header[1]);
-                    agents[id].status[header[1]] = '\0';
-                    memcpy(agents[id].name, rx_buffer + header[1], header[2]);
+                    char status_tmp[MAX_STATUS_LEN];
+                    int slen = header[1] >= MAX_STATUS_LEN ? MAX_STATUS_LEN - 1 : header[1];
+                    memcpy(status_tmp, payload_buffer, slen);
+                    status_tmp[slen] = '\0';
+                    agents[id].status = string_to_status(status_tmp);
+
+                    memcpy(agents[id].name, payload_buffer + header[1], header[2]);
                     agents[id].name[header[2]] = '\0';
-                    memcpy(agents[id].message, rx_buffer + header[1] + header[2], header[3]);
+                    memcpy(agents[id].message, payload_buffer + header[1] + header[2], header[3]);
                     agents[id].message[header[3]] = '\0';
                     agents[id].is_active = true;
                     agents[id].is_dirty = true;
                 }
                 state = STATE_WAIT_FOR_CMD;
-                rx_idx = 0;
-                header_idx = 0;
-                memset(rx_buffer, 0, sizeof(rx_buffer));
             }
         }
     }
