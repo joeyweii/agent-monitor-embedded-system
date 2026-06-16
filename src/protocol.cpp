@@ -40,7 +40,8 @@ void tud_cdc_rx_cb(uint8_t itf) {
 typedef enum {
     STATE_WAIT_FOR_CMD,
     STATE_READ_HEADER,
-    STATE_READ_PAYLOAD
+    STATE_READ_PAYLOAD,
+    STATE_READ_DEL_ID
 } ParserState;
 
 static ParserState state = STATE_WAIT_FOR_CMD;
@@ -49,6 +50,7 @@ static int header_idx = 0;
 static int payload_total = 0;
 static int payload_idx = 0;
 static uint8_t payload_buffer[MAX_MSG_LEN + MAX_NAME_LEN + MAX_STATUS_LEN];
+static uint8_t del_id = 0;
 
 AgentStatus string_to_status(const char* status_str) {
     if (strcmp(status_str, "RUNNING") == 0) return AGENT_STATUS_RUNNING;
@@ -77,7 +79,22 @@ void handle_protocol_event() {
             if (strncmp((char*)cmd_buf, "SET:", 4) == 0) {
                 state = STATE_READ_HEADER;
                 header_idx = 0;
+            } else if (strncmp((char*)cmd_buf, "DEL:", 4) == 0) {
+                state = STATE_READ_DEL_ID;
             }
+        } else if (state == STATE_READ_DEL_ID) {
+            del_id = c - '0';
+            agents[del_id].is_active = false;
+            if (selected_idx == del_id) {
+                selected_idx = -1;
+                for (int i = 0; i < MAX_AGENTS; i++) {
+                    if (agents[i].is_active) {
+                        selected_idx = i;
+                        break;
+                    }
+                }
+            }
+            state = STATE_WAIT_FOR_CMD;
         } else if (state == STATE_READ_HEADER) {
             static uint8_t val_buf[8];
             static int val_idx = 0;

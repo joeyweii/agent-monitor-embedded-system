@@ -47,6 +47,12 @@ def agent_worker(ser, aid):
             agents[aid]["msg"] = res_msg
             send_agent_update(ser, aid, res_status, agents[aid]["name"], res_msg)
 
+def send_agent_delete(ser, agent_id):
+    packet = f"DEL:{agent_id}:".encode('ascii')
+    print(f"\n[SEND] DELETE ID:{agent_id}")
+    ser.write(packet)
+    time.sleep(0.1)
+
 def run_simulator():
     try:
         ser = serial.Serial(PORT, BAUD, timeout=1)
@@ -62,6 +68,7 @@ def run_simulator():
     print("\n--- Interactive Agent Simulator ---")
     print("ADD <id> <name>          - Add a new agent (Default: DONE)")
     print("RUN <id> <msg>           - Start agent (Status: RUNNING)")
+    print("DEL <id>                 - Delete an agent")
     print("QUIT                     - Exit")
 
     try:
@@ -88,6 +95,14 @@ def run_simulator():
                         threading.Thread(target=agent_worker, args=(ser, aid), daemon=True).start()
                     else:
                         print("Agent ID not found. ADD it first.")
+            elif cmd == "DEL":
+                aid = int(cmd_line[1])
+                with agents_lock:
+                    if aid in agents:
+                        del agents[aid]
+                        send_agent_delete(ser, aid)
+                    else:
+                        print("Agent ID not found.")
             elif cmd == "QUIT":
                 break
     except Exception as e:
