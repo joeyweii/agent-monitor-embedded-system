@@ -15,11 +15,13 @@
 
 #include "protocol.h"
 #include "ring_buffer.h"
+#include "ui.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include "tusb.h"
 
+extern int selected_idx;
 static AgentData agents[MAX_AGENTS];
 static ring_buffer_t rx_ring;
 volatile bool protocol_event_flag = false;
@@ -107,6 +109,9 @@ void handle_protocol_event() {
                     memcpy(agents[id].message, payload_buffer + header[1] + header[2], header[3]);
                     agents[id].message[header[3]] = '\0';
                     agents[id].is_active = true;
+                    if (selected_idx == -1) {
+                        selected_idx = id;
+                    }
                     agents[id].is_dirty = true;
                 }
                 state = STATE_WAIT_FOR_CMD;

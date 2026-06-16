@@ -37,14 +37,28 @@ void handle_button_event(uint gpio) {
     if (gpio == BTN_PREV) {
         last_button_time = get_absolute_time();
         if (current_state == STATE_LIST) {
-            selected_idx = (selected_idx + MAX_AGENTS - 1) % MAX_AGENTS;
+            int next_idx = selected_idx;
+            for (int i = 0; i < MAX_AGENTS; i++) {
+                next_idx = (next_idx + MAX_AGENTS - 1) % MAX_AGENTS;
+                if (protocol_get_agent(next_idx)->is_active) {
+                    selected_idx = next_idx;
+                    break;
+                }
+            }
         } else if (current_state == STATE_DETAIL) {
             if (scroll_offset > 0) scroll_offset -= 10;
         }
     } else if (gpio == BTN_NEXT) {
         last_button_time = get_absolute_time();
         if (current_state == STATE_LIST) {
-            selected_idx = (selected_idx + 1) % MAX_AGENTS;
+            int next_idx = selected_idx;
+            for (int i = 0; i < MAX_AGENTS; i++) {
+                next_idx = (next_idx + 1) % MAX_AGENTS;
+                if (protocol_get_agent(next_idx)->is_active) {
+                    selected_idx = next_idx;
+                    break;
+                }
+            }
         } else if (current_state == STATE_DETAIL) {
             scroll_offset += 10;
         }

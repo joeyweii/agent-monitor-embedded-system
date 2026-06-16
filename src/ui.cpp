@@ -7,7 +7,7 @@
 #include <string.h>
 
 UIState current_state = STATE_LIST;
-int selected_idx = 0;
+int selected_idx = -1;
 int scroll_offset = 0;
 absolute_time_t last_button_time = {0};
 static uint32_t frame_counter = 0;
@@ -43,7 +43,7 @@ void ui_update_animation_timer() {
 
 void ui_init() {
     current_state = STATE_LIST;
-    selected_idx = 0;
+    selected_idx = -1;
     scroll_offset = 0;
     frame_counter = 0;
     last_button_time = get_absolute_time();
