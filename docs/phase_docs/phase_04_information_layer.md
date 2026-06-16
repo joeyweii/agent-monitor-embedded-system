@@ -1,4 +1,4 @@
-# Phase Spec: 04 - Information Layer (Complete)
+# Phase 04 - Information Layer (Complete)
 
 ## Objective
 Enable text rendering on the 1.8" LCD by integrating a 5x7 bitmap font engine. This allows the system to display Agent names, status messages, and system alerts.

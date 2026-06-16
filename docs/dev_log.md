@@ -1,7 +1,7 @@
 # Agent Monitor - Engineering Dev Log
 
 ## 2026-06-10 | Phase 01: Hardware Verification Complete
-**Spec Reference**: [Phase 01: Hardware Verification](phase_docs/phase_01_hardware_verification.md)
+**Reference**: [Phase 01: Hardware Verification](phase_docs/phase_01_hardware_verification.md)
 
 ### Accomplishments
 - **LCD Integration**: Verified SPI communication with ST7735. Solved Red-Blue swap by updating `MADCTL` to RGB mode.
@@ -11,7 +11,7 @@
 ---
 
 ## 2026-06-12 | Phase 02: Graphics Foundation Complete
-**Spec Reference**: [Phase 02: Graphics Foundation](phase_docs/phase_02_graphics_foundation.md)
+**Reference**: [Phase 02: Graphics Foundation](phase_docs/phase_02_graphics_foundation.md)
 
 ### Accomplishments
 - **Modular Refactoring**: Migrated from monolithic `main.cpp` to a structured `src/` and `include/` architecture.
@@ -21,7 +21,7 @@
 ---
 
 ## 2026-06-12 | Phase 03: Performance Optimization Complete
-**Spec Reference**: [Phase 03: Performance Optimization](phase_docs/phase_03_performance_optimization.md)
+**Reference**: [Phase 03: Performance Optimization](phase_docs/phase_03_performance_optimization.md)
 
 ### Accomplishments
 - **Pure 16-bit Data Path**: Optimized both SPI and DMA to operate in synchronized 16-bit mode.
@@ -32,7 +32,7 @@
 ---
 
 ## 2026-06-12 | Phase 04: Information Layer Complete
-**Spec Reference**: [Phase 04: Information Layer](phase_docs/phase_04_information_layer.md)
+**Reference**: [Phase 04: Information Layer](phase_docs/phase_04_information_layer.md)
 
 ### Accomplishments
 - **Bitmap Font Engine**: Integrated 5x7 font table and implemented `draw_char`/`draw_string` primitives.
@@ -42,7 +42,7 @@
 ---
 
 ## 2026-06-12 | Phase 05: Communication Layer Complete
-**Spec Reference**: [Phase 05: Communication Layer](phase_docs/phase_05_communication_layer.md)
+**Reference**: [Phase 05: Communication Layer](phase_docs/phase_05_communication_layer.md)
 
 ### Accomplishments
 - **Length-Prefixed Protocol**: Implemented a robust serial command parser that handles arbitrary message content.
@@ -62,7 +62,7 @@
 ---
 
 ## 2026-06-13 | Phase 07: Advanced UI Components Complete
-**Spec Reference**: [Phase 07: Advanced UI Components](phase_docs/phase_07_advanced_ui_components.md)
+**Reference**: [Phase 07: Advanced UI Components](phase_docs/phase_07_advanced_ui_components.md)
 
 ### Accomplishments
 - **Inverted Header**: Implemented visual hierarchy with a high-contrast yellow header bar.
@@ -73,7 +73,12 @@
 
 ---
 
-## [Next Entry] | Phase 08: Interrupt-Driven Architecture
-**Spec Reference**: [Phase 08: Interrupt-Driven Architecture (Upcoming)](#)
+## 2026-06-16 | Phase 08: Interrupt-Driven Architecture Complete
+**Reference**: [Phase 08: Interrupt-Architecture](phase_docs/phase_08_interrupt_architecture.md)
 
-*Starting soon...*
+### Accomplishments
+- **GPIO Interrupts**: Replaced button polling with high-priority edge-triggered interrupts.
+- **DMA Transfer IRQ**: Implemented a DMA completion handler to manage buffer swapping and Chip Select (CS) logic asynchronously.
+- **USB CDC Callbacks**: Integrated TinyUSB `tud_cdc_rx_cb` for interrupt-driven serial data reception into a ring buffer.
+- **Power Optimization**: Switched main loop to `__wfi()` (Wait For Interrupt), allowing the CPU to enter low-power sleep between events.
+- **API Refactoring**: Modernized protocol and UI handling with structured enums (`AgentStatus`) and renamed event handlers (`handle_protocol_event`, `handle_button_event`).

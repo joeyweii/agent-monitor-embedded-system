@@ -1,4 +1,4 @@
-# Phase Spec: 06 - Application Logic (Complete)
+# Phase 06 - Application Logic (Complete)
 
 ## Objective
 Implement a Finite State Machine (FSM) to manage navigation between the "Agent List" and "Detail/Action" views, enabling a true smartwatch-like interactive experience.

@@ -53,8 +53,10 @@ This roadmap outlines the development phases for the Agent Monitor system.
 - [x] Implement text wrapping and scrolling in Detail View.
 
 ## Phase 8: Interrupt-Driven Architecture
-- [ ] Implement UART RX Interrupt for serial data to prevent packet loss.
-- [ ] Implement DMA Transfer-Complete Interrupt for precise buffer swapping.
+- [x] Implement GPIO Interrupts for button handling to improve responsiveness.
+- [x] Implement USB CDC RX Callback (TinyUSB) for asynchronous serial data.
+- [x] Implement DMA Transfer-Complete Interrupt for non-blocking buffer swapping.
+- [x] Transition main loop to `__wfi()` (Wait For Interrupt) for power efficiency.
 
 ## Phase 9: Partial Refresh (Dirty Rectangles)
 - [ ] Implement logic to track "Dirty Rectangles" (only redraw/flush modified areas).

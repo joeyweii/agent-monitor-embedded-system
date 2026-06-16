@@ -1,4 +1,4 @@
-# Phase Spec: 05 - Communication Layer (Complete)
+# Phase 05 - Communication Layer (Complete)
 
 ## Objective
 Establish a robust, asynchronous serial communication channel allowing the host computer to stream AI agent status updates to the device.

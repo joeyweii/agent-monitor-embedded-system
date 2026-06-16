@@ -1,4 +1,4 @@
-# Phase Spec: 07 - Advanced UI Components
+# Phase 07 - Advanced UI Components
 
 ## Objective
 Transform the dashboard from a text-heavy interface into a polished, glanceable UI by introducing high-contrast headers, graphical status icons, and dynamic animations.
