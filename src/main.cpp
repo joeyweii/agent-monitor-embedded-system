@@ -39,8 +39,12 @@ int main() {
             ui_update();
         }
 
-        // Wait for interrupt (DMA, Serial, or Timer)
-        __wfi();
+        // Wait for interrupt (DMA, Serial, or Timer) safely
+        uint32_t status = save_and_disable_interrupts();
+        if (!protocol_event_flag && !button_event_flag && !ui_dirty_flag) {
+            __wfi();
+        }
+        restore_interrupts(status);
     }
 
     return 0;
