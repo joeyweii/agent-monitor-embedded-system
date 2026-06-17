@@ -9,6 +9,7 @@
 UIState current_state = STATE_LIST;
 int selected_idx = -1;
 int scroll_offset = 0;
+bool is_asleep = false;
 absolute_time_t last_button_time = {0};
 static uint32_t frame_counter = 0;
 volatile bool ui_dirty_flag = true;
@@ -46,6 +47,8 @@ void ui_init() {
     selected_idx = -1;
     scroll_offset = 0;
     frame_counter = 0;
+    is_asleep = false;
+    display_set_backlight(65535); // Full brightness
     last_button_time = get_absolute_time();
 }
 
@@ -94,11 +97,24 @@ void ui_draw_icon(int x, int y, AgentStatus status) {
     }
 }
 
+void ui_wake_up() {
+    if (is_asleep) {
+        is_asleep = false;
+        display_set_backlight(65535);
+        ui_dirty_flag = true;
+    }
+}
+
 void ui_update() {
+    if (is_asleep) return;
+
     ui_update_animation_timer(); // Manage animation timer dynamically
-    
+// ...
+
+
     display_clear(COLOR_BLACK);
     ui_draw_header();
+// ...
 
     if (current_state == STATE_LIST) {
         for (int i = 0; i < MAX_AGENTS; i++) {

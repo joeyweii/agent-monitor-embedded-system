@@ -16,9 +16,6 @@ int main() {
     ui_init();
 
     while (true) {
-        // Tracks whether the main loop is actively running
-        led_toggle();
-
         // Process UART Communication
         if (protocol_event_flag) {
             protocol_event_flag = false;
@@ -49,3 +46,4 @@ int main() {
 
     return 0;
 }
+

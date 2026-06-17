@@ -3,6 +3,35 @@
 #include "hardware/gpio.h"
 #include "hardware/dma.h"
 #include "hardware/irq.h"
+#include "hardware/pwm.h"
+#include "hardware/spi.h"
+#include "hardware/timer.h"
+#include "ui.h"
+
+// Backlight timeout: 10 seconds
+#define BACKLIGHT_TIMEOUT_US 10000000
+
+// Alarm handler to dim the backlight
+void backlight_alarm_handler(uint alarm_num) {
+    timer_hw->intr = 1u << alarm_num;
+    display_set_backlight(0);
+    is_asleep = true;
+    ui_dirty_flag = true;
+}
+
+void reset_backlight_alarm() {
+    hardware_alarm_cancel(0);
+    if (!is_asleep) {
+        hardware_alarm_set_target(0, delayed_by_us(get_absolute_time(), BACKLIGHT_TIMEOUT_US));
+    }
+}
+
+void display_init_backlight_timer() {
+    hardware_alarm_claim(0);
+    hardware_alarm_set_callback(0, backlight_alarm_handler);
+    irq_set_enabled(TIMER_IRQ_0, true);
+    reset_backlight_alarm();
+}
 
 // Double Buffering Allocation (80KB total)
 static uint16_t buffer_0[LCD_WIDTH * LCD_HEIGHT];
@@ -89,9 +118,11 @@ void display_init() {
     gpio_init(PIN_RESET);
     gpio_set_dir(PIN_RESET, GPIO_OUT);
 
-    gpio_init(PIN_BL);
-    gpio_set_dir(PIN_BL, GPIO_OUT);
-    gpio_put(PIN_BL, 1);
+    // PWM for Backlight
+    gpio_set_function(PIN_BL, GPIO_FUNC_PWM);
+    uint slice_num = pwm_gpio_to_slice_num(PIN_BL);
+    pwm_set_enabled(slice_num, true);
+    pwm_set_gpio_level(PIN_BL, 65535); // Full brightness
 
     // Hardware Reset
     gpio_put(PIN_RESET, 1);
@@ -125,6 +156,13 @@ void display_init() {
     dma_channel_set_irq0_enabled(dma_chan, true);
     irq_set_exclusive_handler(DMA_IRQ_0, dma_handler);
     irq_set_enabled(DMA_IRQ_0, true);
+    
+    // Power management
+    display_init_backlight_timer();
+}
+
+void display_set_backlight(uint16_t level) {
+    pwm_set_gpio_level(PIN_BL, level);
 }
 
 void display_clear(uint16_t color) {

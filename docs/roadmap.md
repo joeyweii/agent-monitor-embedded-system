@@ -58,11 +58,7 @@ This roadmap outlines the development phases for the Agent Monitor system.
 - [x] Implement DMA Transfer-Complete Interrupt for non-blocking buffer swapping.
 - [x] Transition main loop to `__wfi()` (Wait For Interrupt) for power efficiency.
 
-## Phase 9: Partial Refresh (Dirty Rectangles)
-- [ ] Implement logic to track "Dirty Rectangles" (only redraw/flush modified areas).
-- [ ] Optimize SPI bandwidth for high-frequency UI animations.
-
-## Phase 10: Power Management
+## Phase 9: Power Management
 - [ ] Implement software-controlled backlight dimming (PWM).
 - [ ] Develop "Sleep Mode" logic (LCD off/CPU dormant) after inactivity timeout.
 - [ ] Implement wake-on-interrupt for physical buttons.

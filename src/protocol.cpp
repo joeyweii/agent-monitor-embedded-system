@@ -16,6 +16,7 @@
 #include "protocol.h"
 #include "ring_buffer.h"
 #include "ui.h"
+#include "display.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -69,6 +70,9 @@ void protocol_init() {
 }
 
 void handle_protocol_event() {
+    ui_wake_up();
+    reset_backlight_alarm();
+
     uint8_t c;
     // Process all bytes currently in the ring buffer
     while (ring_buffer_pop(&rx_ring, &c)) {

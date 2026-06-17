@@ -1,4 +1,5 @@
 #include "button.h"
+#include "display.h"
 #include "ui.h"
 #include "hardware/gpio.h"
 
@@ -33,6 +34,9 @@ bool button_is_pressed(uint pin) {
 
 void handle_button_event(uint gpio) {
     if (absolute_time_diff_us(last_button_time, get_absolute_time()) < 200000) return;
+
+    ui_wake_up();
+    reset_backlight_alarm();
 
     if (gpio == BTN_PREV) {
         last_button_time = get_absolute_time();

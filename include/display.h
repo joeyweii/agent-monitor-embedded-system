@@ -41,7 +41,12 @@ void display_draw_rect(int x, int y, int w, int h, uint16_t color);
 
 // DMA & Double Buffering API
 void display_flush_async();
+void display_set_backlight(uint16_t level);
+void display_init_backlight_timer();
+void reset_backlight_alarm();
+
 bool display_is_busy();
+
 void display_wait_ready();
 
 // Text Rendering API
