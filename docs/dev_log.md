@@ -82,3 +82,15 @@
 - **USB CDC Callbacks**: Integrated TinyUSB `tud_cdc_rx_cb` for interrupt-driven serial data reception into a ring buffer.
 - **Power Optimization**: Switched main loop to `__wfi()` (Wait For Interrupt), allowing the CPU to enter low-power sleep between events.
 - **API Refactoring**: Modernized protocol and UI handling with structured enums (`AgentStatus`) and renamed event handlers (`handle_protocol_event`, `handle_button_event`).
+
+---
+
+## 2026-06-17 | Phase 09: Power Management Complete
+**Reference**: [Phase 09: Power Management](phase_docs/phase_09_power_management.md)
+
+
+### Accomplishments
+- **PWM Backlight**: Configured hardware PWM for software-controlled backlight dimming.
+- **Hardware Alarm Inactivity Timer**: Implemented a 30s timeout using `hardware_alarm` in `display.cpp` to dim the screen.
+- **Wake-on-Interrupt**: Updated button and protocol event handlers to instantly wake the UI/backlight.
+- **Encapsulation**: Refactored power management logic into the display module, keeping the main loop efficient and modular.

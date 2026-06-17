@@ -71,7 +71,7 @@ The system operates as a finite state machine (FSM):
 
 ### 2.8 Power Management
 As a portable-ready peripheral, power efficiency is a core design pillar:
-*   **Dynamic Backlight**: PWM-based dimming for idle states (Planned).
+*   **Dynamic Backlight**: PWM-based dimming for idle states.
 *   **Event-based Wake**: Hardware interrupts on button pins and USB serial to wake the processor from `__wfi()`.
 
 ## 3. Development Roadmap

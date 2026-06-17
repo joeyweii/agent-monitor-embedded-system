@@ -59,9 +59,9 @@ This roadmap outlines the development phases for the Agent Monitor system.
 - [x] Transition main loop to `__wfi()` (Wait For Interrupt) for power efficiency.
 
 ## Phase 9: Power Management
-- [ ] Implement software-controlled backlight dimming (PWM).
-- [ ] Develop "Sleep Mode" logic (LCD off/CPU dormant) after inactivity timeout.
-- [ ] Implement wake-on-interrupt for physical buttons.
+- [x] Implement software-controlled backlight dimming (PWM).
+- [x] Develop "Sleep Mode" logic (LCD off/CPU dormant) after inactivity timeout.
+- [x] Implement wake-on-interrupt for physical buttons.
 
 ---
 
