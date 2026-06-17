@@ -1,3 +1,8 @@
+/**
+ * @file display.h
+ * @brief Low-level display driver and graphics primitives for ST7735 LCD.
+ */
+
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
@@ -33,25 +38,81 @@
 // SPI Instance
 #define SPI_PORT spi0
 
-// API Functions
+// Hardware SPI Configuration
+#define SPI_BAUDRATE (24 * 1000 * 1000)
+
+// Power Management
+#define BACKLIGHT_TIMEOUT_US 10000000 // 10 seconds
+#define BACKLIGHT_FULL_BRIGHTNESS 65535
+
+/**
+ * @brief Initializes the display hardware, SPI, PWM, and ST7735 controller.
+ */
 void display_init();
+
+/**
+ * @brief Clears the back buffer with a specific color.
+ * @param color RGB565 color value.
+ */
 void display_clear(uint16_t color);
+
+/**
+ * @brief Draws a single pixel to the back buffer.
+ * @param x X coordinate.
+ * @param y Y coordinate.
+ * @param color RGB565 color value.
+ */
 void display_draw_pixel(int x, int y, uint16_t color);
+
+/**
+ * @brief Draws a filled rectangle to the back buffer.
+ */
 void display_draw_rect(int x, int y, int w, int h, uint16_t color);
 
-// DMA & Double Buffering API
+/**
+ * @brief Draws a hollow rectangle (border) to the back buffer.
+ */
+void display_draw_hollow_rect(int x, int y, int w, int h, uint16_t color);
+
+/**
+ * @brief Swaps buffers and starts an asynchronous DMA transfer to the LCD.
+ * Non-blocking if a transfer is not already in progress.
+ */
 void display_flush_async();
+
+/**
+ * @brief Sets the backlight brightness level via PWM.
+ * @param level 16-bit PWM duty cycle (0-65535).
+ */
 void display_set_backlight(uint16_t level);
+
 void display_init_backlight_timer();
 void reset_backlight_alarm();
 
+/**
+ * @brief Checks if a DMA transfer is currently in progress.
+ * @return true if busy, false if ready.
+ */
 bool display_is_busy();
 
 void display_wait_ready();
 
-// Text Rendering API
+/**
+ * @brief Draws a single character using the internal 5x7 font.
+ */
 void display_draw_char(int x, int y, char c, uint16_t color, uint16_t bg, uint8_t size);
+
+/**
+ * @brief Draws a string to the back buffer.
+ */
 void display_draw_string(int x, int y, const char* str, uint16_t color, uint16_t bg, uint8_t size);
+
+/**
+ * @brief Draws a string with word-wrapping and vertical scrolling support.
+ * @param max_width Maximum width in pixels before wrapping.
+ * @param line_height Height of each line in pixels.
+ * @param scroll_offset Vertical offset for the viewport.
+ */
 void display_draw_string_with_scroll(int x, int y, const char* str, uint16_t color, uint16_t bg, uint8_t size, int max_width, int line_height, int scroll_offset);
 
 #endif // DISPLAY_H

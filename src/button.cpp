@@ -50,7 +50,7 @@ void handle_button_event(uint gpio) {
                 }
             }
         } else if (current_state == STATE_DETAIL) {
-            if (scroll_offset > 0) scroll_offset -= 10;
+            if (scroll_offset > 0) scroll_offset -= UI_DETAIL_SCROLL_STEP;
         }
     } else if (gpio == BTN_NEXT) {
         last_button_time = get_absolute_time();
@@ -64,7 +64,7 @@ void handle_button_event(uint gpio) {
                 }
             }
         } else if (current_state == STATE_DETAIL) {
-            scroll_offset += 10;
+            scroll_offset += UI_DETAIL_SCROLL_STEP;
         }
     } else if (gpio == BTN_SELECT) {
         last_button_time = get_absolute_time();

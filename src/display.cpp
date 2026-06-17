@@ -8,9 +8,6 @@
 #include "hardware/timer.h"
 #include "ui.h"
 
-// Backlight timeout: 10 seconds
-#define BACKLIGHT_TIMEOUT_US 10000000
-
 // Alarm handler to dim the backlight
 void backlight_alarm_handler(uint alarm_num) {
     timer_hw->intr = 1u << alarm_num;
@@ -98,8 +95,8 @@ static void set_window(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1) {
 }
 
 void display_init() {
-    // Initialize SPI at high speed (24MHz target)
-    spi_init(SPI_PORT, 24 * 1000 * 1000);
+    // Initialize SPI at high speed
+    spi_init(SPI_PORT, SPI_BAUDRATE);
     
     // Default to 16-bit format for DMA efficiency
     spi_set_format(SPI_PORT, 16, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
@@ -122,7 +119,7 @@ void display_init() {
     gpio_set_function(PIN_BL, GPIO_FUNC_PWM);
     uint slice_num = pwm_gpio_to_slice_num(PIN_BL);
     pwm_set_enabled(slice_num, true);
-    pwm_set_gpio_level(PIN_BL, 65535); // Full brightness
+    pwm_set_gpio_level(PIN_BL, BACKLIGHT_FULL_BRIGHTNESS);
 
     // Hardware Reset
     gpio_put(PIN_RESET, 1);
@@ -182,6 +179,13 @@ void display_draw_rect(int x, int y, int w, int h, uint16_t color) {
             back_buffer[j * LCD_WIDTH + i] = color;
         }
     }
+}
+
+void display_draw_hollow_rect(int x, int y, int w, int h, uint16_t color) {
+    display_draw_rect(x, y, w, 1, color);           // Top
+    display_draw_rect(x, y + h - 1, w, 1, color);   // Bottom
+    display_draw_rect(x, y, 1, h, color);           // Left
+    display_draw_rect(x + w - 1, y, 1, h, color);   // Right
 }
 
 void display_draw_char(int x, int y, char c, uint16_t color, uint16_t bg, uint8_t size) {

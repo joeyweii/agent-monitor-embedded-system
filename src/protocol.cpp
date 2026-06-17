@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include "tusb.h"
 
-extern int selected_idx;
+extern int8_t selected_idx;
 static AgentData agents[MAX_AGENTS];
 static ring_buffer_t rx_ring;
 volatile bool protocol_event_flag = false;
@@ -40,12 +40,15 @@ void tud_cdc_rx_cb(uint8_t itf) {
 
 typedef enum {
     STATE_WAIT_FOR_CMD,
+    STATE_PARSE_CMD,
     STATE_READ_HEADER,
     STATE_READ_PAYLOAD,
     STATE_READ_DEL_ID
 } ParserState;
 
 static ParserState state = STATE_WAIT_FOR_CMD;
+static char cmd_buffer[5];
+static int cmd_idx = 0;
 static uint8_t header[4]; // id, slen, nlen, mlen
 static int header_idx = 0;
 static int payload_total = 0;
@@ -74,69 +77,96 @@ void handle_protocol_event() {
     reset_backlight_alarm();
 
     uint8_t c;
-    // Process all bytes currently in the ring buffer
     while (ring_buffer_pop(&rx_ring, &c)) {
-        if (state == STATE_WAIT_FOR_CMD) {
-            static uint8_t cmd_buf[4] = {0};
-            memmove(cmd_buf, cmd_buf + 1, 3);
-            cmd_buf[3] = c;
-            if (strncmp((char*)cmd_buf, "SET:", 4) == 0) {
-                state = STATE_READ_HEADER;
-                header_idx = 0;
-            } else if (strncmp((char*)cmd_buf, "DEL:", 4) == 0) {
-                state = STATE_READ_DEL_ID;
-            }
-        } else if (state == STATE_READ_DEL_ID) {
-            del_id = c - '0';
-            agents[del_id].is_active = false;
-            if (selected_idx == del_id) {
-                selected_idx = -1;
-                for (int i = 0; i < MAX_AGENTS; i++) {
-                    if (agents[i].is_active) {
-                        selected_idx = i;
-                        break;
-                    }
+        switch (state) {
+            case STATE_WAIT_FOR_CMD:
+                if (c == 'S' || c == 'D') {
+                    cmd_buffer[0] = c;
+                    cmd_idx = 1;
+                    state = STATE_PARSE_CMD;
                 }
-            }
-            state = STATE_WAIT_FOR_CMD;
-        } else if (state == STATE_READ_HEADER) {
-            static uint8_t val_buf[8];
-            static int val_idx = 0;
-            if (c == ':') {
-                val_buf[val_idx] = '\0';
-                header[header_idx++] = atoi((char*)val_buf);
-                val_idx = 0;
-                if (header_idx == 4) {
-                    payload_total = header[1] + header[2] + header[3];
-                    state = STATE_READ_PAYLOAD;
-                    payload_idx = 0;
-                }
-            } else {
-                val_buf[val_idx++] = c;
-            }
-        } else if (state == STATE_READ_PAYLOAD) {
-            payload_buffer[payload_idx++] = c;
-            if (payload_idx >= payload_total) {
-                uint8_t id = header[0];
-                if (id < MAX_AGENTS) {
-                    char status_tmp[MAX_STATUS_LEN];
-                    int slen = header[1] >= MAX_STATUS_LEN ? MAX_STATUS_LEN - 1 : header[1];
-                    memcpy(status_tmp, payload_buffer, slen);
-                    status_tmp[slen] = '\0';
-                    agents[id].status = string_to_status(status_tmp);
+                break;
 
-                    memcpy(agents[id].name, payload_buffer + header[1], header[2]);
-                    agents[id].name[header[2]] = '\0';
-                    memcpy(agents[id].message, payload_buffer + header[1] + header[2], header[3]);
-                    agents[id].message[header[3]] = '\0';
-                    agents[id].is_active = true;
-                    if (selected_idx == -1) {
-                        selected_idx = id;
+            case STATE_PARSE_CMD:
+                cmd_buffer[cmd_idx++] = c;
+                if (cmd_idx == 4) {
+                    cmd_buffer[4] = '\0';
+                    if (strcmp(cmd_buffer, "SET:") == 0) {
+                        state = STATE_READ_HEADER;
+                        header_idx = 0;
+                    } else if (strcmp(cmd_buffer, "DEL:") == 0) {
+                        state = STATE_READ_DEL_ID;
+                    } else {
+                        state = STATE_WAIT_FOR_CMD;
                     }
-                    agents[id].is_dirty = true;
+                }
+                break;
+
+            case STATE_READ_DEL_ID:
+                del_id = c - '0';
+                if (del_id < MAX_AGENTS) {
+                    agents[del_id].is_active = false;
+                    if (selected_idx == del_id) {
+                        selected_idx = -1;
+                        for (int i = 0; i < MAX_AGENTS; i++) {
+                            if (agents[i].is_active) {
+                                selected_idx = i;
+                                break;
+                            }
+                        }
+                    }
                 }
                 state = STATE_WAIT_FOR_CMD;
+                break;
+
+            case STATE_READ_HEADER: {
+                static char val_buf[8];
+                static int val_idx = 0;
+                if (c == ':') {
+                    val_buf[val_idx] = '\0';
+                    header[header_idx++] = atoi(val_buf);
+                    val_idx = 0;
+                    if (header_idx == 4) {
+                        payload_total = header[1] + header[2] + header[3];
+                        state = STATE_READ_PAYLOAD;
+                        payload_idx = 0;
+                    }
+                } else if (c >= '0' && c <= '9') {
+                    if (val_idx < 7) val_buf[val_idx++] = c;
+                } else {
+                    // Invalid character in header, reset
+                    state = STATE_WAIT_FOR_CMD;
+                    val_idx = 0;
+                }
+                break;
             }
+
+            case STATE_READ_PAYLOAD:
+                payload_buffer[payload_idx++] = c;
+                if (payload_idx >= payload_total) {
+                    uint8_t id = header[0];
+                    if (id < MAX_AGENTS) {
+                        char status_tmp[MAX_STATUS_LEN];
+                        int slen = (header[1] >= MAX_STATUS_LEN) ? MAX_STATUS_LEN - 1 : header[1];
+                        memcpy(status_tmp, payload_buffer, slen);
+                        status_tmp[slen] = '\0';
+                        agents[id].status = string_to_status(status_tmp);
+
+                        int nlen = (header[2] >= MAX_NAME_LEN) ? MAX_NAME_LEN - 1 : header[2];
+                        memcpy(agents[id].name, payload_buffer + header[1], nlen);
+                        agents[id].name[nlen] = '\0';
+
+                        int mlen = (header[3] >= MAX_MSG_LEN) ? MAX_MSG_LEN - 1 : header[3];
+                        memcpy(agents[id].message, payload_buffer + header[1] + header[2], mlen);
+                        agents[id].message[mlen] = '\0';
+
+                        agents[id].is_active = true;
+                        if (selected_idx == -1) selected_idx = id;
+                        agents[id].is_dirty = true;
+                    }
+                    state = STATE_WAIT_FOR_CMD;
+                }
+                break;
         }
     }
 }
