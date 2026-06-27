@@ -16,6 +16,6 @@ The **Agent Monitor** provides a dedicated, glanceable display for monitoring th
 ## Documentation
 
 - [Design Document](docs/design_doc.md): System architecture and technical goals.
-- [Breadboard Layout & Wiring](docs/breadboard_layout.md): Hardware setup.
 - [Project Roadmap](docs/roadmap.md): High-level development phases and status.
-- [Engineering Dev Log](docs/dev_log.md): Continuous journal of technical progress.
+- [Unit Tests](docs/test_doc.md): Host-compiled unit tests.
+- [Breadboard Layout & Wiring](docs/breadboard_layout.md): Hardware setup.
