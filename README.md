@@ -17,5 +17,6 @@ The **Agent Monitor** provides a dedicated, glanceable display for monitoring th
 
 - [Design Document](docs/design_doc.md): System architecture and technical goals.
 - [Project Roadmap](docs/roadmap.md): High-level development phases and status.
-- [Unit Tests](docs/test_doc.md): Host-compiled unit tests.
-- [Breadboard Layout & Wiring](docs/breadboard_layout.md): Hardware setup.
+- [Architecture Decision Records (ADR)](docs/adr.md): Critical design choices, trade-offs. 
+- [Test Report](docs/test_report.md): Test summaries covering host-compiled unit tests.
+- [Hardware Configuration & Wiring](docs/breadboard_layout.md): Physical schematic, pinout assignments, and breadboard layout.
