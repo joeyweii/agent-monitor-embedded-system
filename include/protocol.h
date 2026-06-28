@@ -15,7 +15,7 @@
 /** @brief Maximum length of an agent's status string. */
 #define MAX_STATUS_LEN 16
 /** @brief Maximum length of an agent's message string. */
-#define MAX_MSG_LEN 64
+#define MAX_MSG_LEN 128
 
 /**
  * @brief Possible agent statuses.
