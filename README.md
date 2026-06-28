@@ -2,6 +2,8 @@
 
 A hardware-based status monitor for autonomous AI agents using Raspberry Pi Pico (RP2040) and ST7735 LCD.
 
+https://github.com/user-attachments/assets/fb4d1b74-2b26-4d65-ac67-8b95ea5d4e87
+
 ## Overview
 
 The **Agent Monitor** provides a dedicated, glanceable display for monitoring the status of AI agents. It allows developers to keep track of agent health, tasks, and approval requests without switching windows on their primary workstation, even when away from the PC (e.g., during lunch).
